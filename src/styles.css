@@ -355,8 +355,8 @@ textarea:focus-visible {
 }
 
 .issue-marker {
-  padding: 2px 3px;
-  border-radius: 5px;
+  padding: 0;
+  border-radius: 4px;
   background: transparent;
 }
 
@@ -379,8 +379,14 @@ textarea:focus-visible {
 }
 
 .issue-marker.insertion {
+  position: relative;
+  display: inline-block;
+  width: 0;
+  padding: 0;
+  overflow: visible;
   color: var(--red);
   font-weight: 800;
+  transform: translateX(3px);
 }
 
 .editor-workspace {
@@ -532,6 +538,33 @@ textarea:focus-visible {
   padding: 15px 18px 16px;
   border-top: 1px solid var(--line);
   background: linear-gradient(90deg, #fbfdff, #fff);
+}
+
+.context-popover {
+  position: absolute;
+  z-index: 8;
+  left: var(--popover-x);
+  top: var(--popover-y);
+  width: min(360px, calc(100% - 28px));
+  transform: translateX(-50%);
+  border: 1px solid #dbe5f0;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #fffafa, #ffffff);
+  box-shadow: 0 18px 42px rgba(27, 56, 102, 0.18);
+  pointer-events: auto;
+}
+
+.context-popover::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translateX(-50%) rotate(45deg);
+  border-left: 1px solid #dbe5f0;
+  border-top: 1px solid #dbe5f0;
+  background: #fffafa;
 }
 
 .context-suggestion-heading {
@@ -1371,6 +1404,11 @@ footer span:first-child {
 }
 
 @media (max-width: 620px) {
+  .context-popover {
+    width: calc(100% - 20px);
+    max-width: 340px;
+  }
+
   .editor-sidebar {
     grid-template-columns: 1fr;
   }
