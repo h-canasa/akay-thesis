@@ -6,7 +6,7 @@ const starterText = 'Kumain rin ako ng mangga saging at ubas';
 function Logo() {
   return (
     <a className="brand" href="#/" aria-label="Akay home">
-      <img src={`${import.meta.env.BASE_URL}akay-logo.png`} alt="Akay — Kaagapay sa Wastong Pagsulat" />
+      <img src={`${import.meta.env.BASE_URL}akay-logo.svg`} alt="Akay — Kaagapay sa Wastong Pagsulat" />
     </a>
   );
 }
