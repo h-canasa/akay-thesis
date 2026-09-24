@@ -165,7 +165,7 @@ function SuggestionPanel({ analysis, onAccept, onIgnore }) {
   );
 }
 
-function QualityPanel({ analysis }) {
+function QualityPanel({ analysis, compact = false }) {
   const score = analysis?.score ?? 0;
   const counts = analysis?.counts ?? {
     [CATEGORY.SPELLING]: 0,
@@ -215,7 +215,7 @@ function QualityPanel({ analysis }) {
   ]);
 
   return (
-    <section className="quality-card">
+    <section className={`quality-card ${compact ? 'quality-card-compact' : ''}`}>
       <div className="panel-heading quality-heading">
         <div className="heading-with-icon">
           <span className="bars-icon" aria-hidden="true">
@@ -325,116 +325,116 @@ function EditorPage() {
           <span className="hero-accent" aria-hidden="true" />
         </section>
 
-        <section className="live-editor-layout">
-          <section className="editor-card" aria-label="Writing editor">
-            <div className="editor-toolbar">
-              <div className="heading-with-icon">
-                <span className="document-icon" aria-hidden="true">▤</span>
-                <h2>Isulat ang iyong teksto</h2>
+        <section className="editor-workspace">
+          <div className="editor-main-column">
+            <section className="editor-card" aria-label="Writing editor">
+              <div className="editor-toolbar">
+                <div className="heading-with-icon">
+                  <span className="document-icon" aria-hidden="true">▤</span>
+                  <h2>Isulat ang iyong teksto</h2>
+                </div>
+
+                <div className="toolbar-actions">
+                  <span className="live-status">
+                    <i aria-hidden="true" />
+                    Sinusuri habang nagsusulat
+                  </span>
+                  <button
+                    className="button button-ghost"
+                    onClick={clearText}
+                    disabled={!text}
+                  >
+                    Burahin
+                  </button>
+                </div>
               </div>
 
-              <div className="toolbar-actions">
-                <span className="live-status">
-                  <i aria-hidden="true" />
-                  Sinusuri habang nagsusulat
-                </span>
-                <button
-                  className="button button-ghost"
-                  onClick={clearText}
-                  disabled={!text}
-                >
-                  Burahin
-                </button>
+              <div className="editor-surface live-editor-surface">
+                <div className="highlight-layer" aria-hidden="true">
+                  <HighlightedText text={text} issues={analysis?.issues ?? []} />
+                </div>
+
+                <textarea
+                  className="live-editor-input"
+                  value={text}
+                  onChange={(event) => updateText(event.target.value)}
+                  onClick={selectIssueAtCaret}
+                  onKeyUp={selectIssueAtCaret}
+                  onSelect={selectIssueAtCaret}
+                  placeholder="Magsimulang magsulat dito..."
+                  spellCheck="false"
+                  aria-label="Tekstong susuriin"
+                />
+
+                <span className="character-count">{text.length}/2,000</span>
               </div>
-            </div>
 
-            <div className="editor-surface live-editor-surface">
-              <div className="highlight-layer" aria-hidden="true">
-                <HighlightedText text={text} issues={analysis?.issues ?? []} />
-              </div>
-
-              <textarea
-                className="live-editor-input"
-                value={text}
-                onChange={(event) => updateText(event.target.value)}
-                onClick={selectIssueAtCaret}
-                onKeyUp={selectIssueAtCaret}
-                onSelect={selectIssueAtCaret}
-                placeholder="Magsimulang magsulat dito..."
-                spellCheck="false"
-                aria-label="Tekstong susuriin"
-              />
-
-              <span className="character-count">{text.length}/2,000</span>
-            </div>
-
-            {selectedIssue && (
-              <div className="context-suggestion" aria-live="polite">
-                <div className="context-suggestion-heading">
-                  <div>
-                    <span>Mungkahi · {selectedIssue.category}</span>
-                    <strong>
-                      {selectedIssue.original || '∅'} <b aria-hidden="true">→</b>{' '}
-                      {selectedIssue.replacement}
-                    </strong>
+              {selectedIssue && (
+                <div className="context-suggestion" aria-live="polite">
+                  <div className="context-suggestion-heading">
+                    <div>
+                      <span>Mungkahi · {selectedIssue.category}</span>
+                      <strong>
+                        {selectedIssue.original || '∅'} <b aria-hidden="true">→</b>{' '}
+                        {selectedIssue.replacement}
+                      </strong>
+                    </div>
+                    <button
+                      className="context-close"
+                      onClick={() => setSelectedIssueId(null)}
+                      aria-label="Isara ang mungkahi"
+                    >
+                      ×
+                    </button>
                   </div>
-                  <button
-                    className="context-close"
-                    onClick={() => setSelectedIssueId(null)}
-                    aria-label="Isara ang mungkahi"
-                  >
-                    ×
-                  </button>
+
+                  <p>{selectedIssue.explanation}</p>
+
+                  <div className="suggestion-actions">
+                    <button
+                      className="button button-small button-primary"
+                      onClick={() => acceptIssue(selectedIssue)}
+                    >
+                      Tanggapin
+                    </button>
+                    <button
+                      className="button button-small button-ghost"
+                      onClick={() => ignoreIssue(selectedIssue)}
+                    >
+                      Huwag Pansinin
+                    </button>
+                  </div>
                 </div>
+              )}
+            </section>
 
-                <p>{selectedIssue.explanation}</p>
+            <p className="editor-tip">
+              Pindutin ang naka-highlight na salita o bahagi ng pangungusap upang
+              makita ang paliwanag at mungkahing pagwawasto.
+            </p>
+          </div>
 
-                <div className="suggestion-actions">
-                  <button
-                    className="button button-small button-primary"
-                    onClick={() => acceptIssue(selectedIssue)}
-                  >
-                    Tanggapin
-                  </button>
-                  <button
-                    className="button button-small button-ghost"
-                    onClick={() => ignoreIssue(selectedIssue)}
-                  >
-                    Huwag Pansinin
-                  </button>
-                </div>
-              </div>
-            )}
-          </section>
+          <aside className="editor-sidebar">
+            <QualityPanel analysis={analysis} compact />
 
-          <p className="editor-tip">
-            Pindutin ang naka-highlight na salita o bahagi ng pangungusap upang
-            makita ang paliwanag at mungkahing pagwawasto.
-          </p>
+            <a className="test-cta" href="#/tools">
+              <span className="test-cta-icon" aria-hidden="true">✦</span>
+              <span>
+                <strong>Mga Tool sa Pagsulat</strong>
+                <small>Rewrite / Tone Assistant at English–Filipino Helper.</small>
+              </span>
+              <span className="test-cta-arrow" aria-hidden="true">›</span>
+            </a>
 
-          <section className="support-grid">
-            <QualityPanel analysis={analysis} />
-
-            <div className="support-links">
-              <a className="test-cta" href="#/tools">
-                <span className="test-cta-icon" aria-hidden="true">✦</span>
-                <span>
-                  <strong>Mga Tool sa Pagsulat</strong>
-                  <small>Rewrite / Tone Assistant at English–Filipino Helper.</small>
-                </span>
-                <span className="test-cta-arrow" aria-hidden="true">›</span>
-              </a>
-
-              <a className="test-cta" href="#/test">
-                <span className="test-cta-icon" aria-hidden="true">▤</span>
-                <span>
-                  <strong>Subukan ang Test Mode</strong>
-                  <small>Magsanay nang walang mungkahi habang nagsusulat.</small>
-                </span>
-                <span className="test-cta-arrow" aria-hidden="true">›</span>
-              </a>
-            </div>
-          </section>
+            <a className="test-cta" href="#/test">
+              <span className="test-cta-icon" aria-hidden="true">▤</span>
+              <span>
+                <strong>Subukan ang Test Mode</strong>
+                <small>Magsanay nang walang mungkahi habang nagsusulat.</small>
+              </span>
+              <span className="test-cta-arrow" aria-hidden="true">›</span>
+            </a>
+          </aside>
         </section>
 
         <p className="scope-note">
