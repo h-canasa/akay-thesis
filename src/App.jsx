@@ -259,33 +259,41 @@ function QualityPanel({ analysis }) {
 
 function EditorPage() {
   const [text, setText] = useState(starterText);
-  const [analysis, setAnalysis] = useState(null);
   const [ignored, setIgnored] = useState(new Set());
-  const [editing, setEditing] = useState(true);
+  const [selectedIssueId, setSelectedIssueId] = useState(null);
 
-  const runCheck = () => {
-    const next = analyzeText(text);
-    setIgnored(new Set());
-    setAnalysis(next);
-    setEditing(false);
-  };
+  const analysis = useMemo(
+    () => (text.trim() ? analyzeText(text, ignored) : null),
+    [text, ignored],
+  );
 
-  const startEditing = () => {
-    setEditing(true);
-  };
+  const selectedIssue = analysis?.issues.find(
+    (issue) => issueKey(issue) === selectedIssueId,
+  ) ?? null;
 
   const updateText = (value) => {
-    setText(value);
-    setAnalysis(null);
+    setText(value.slice(0, 2000));
     setIgnored(new Set());
-    setEditing(true);
+    setSelectedIssueId(null);
   };
 
   const clearText = () => {
     setText('');
-    setAnalysis(null);
     setIgnored(new Set());
-    setEditing(true);
+    setSelectedIssueId(null);
+  };
+
+  const selectIssueAtCaret = (event) => {
+    if (!analysis) return;
+    const position = event.currentTarget.selectionStart ?? 0;
+    const issue = analysis.issues.find((item) => {
+      if (item.start === item.end) {
+        return Math.abs(position - item.start) <= 1;
+      }
+      return position >= item.start && position <= item.end;
+    });
+
+    setSelectedIssueId(issue ? issueKey(issue) : null);
   };
 
   const acceptIssue = (issue) => {
@@ -293,15 +301,14 @@ function EditorPage() {
       text.slice(0, issue.start) + issue.replacement + text.slice(issue.end);
     setText(nextText);
     setIgnored(new Set());
-    setAnalysis(analyzeText(nextText));
-    setEditing(false);
+    setSelectedIssueId(null);
   };
 
   const ignoreIssue = (issue) => {
     const nextIgnored = new Set(ignored);
     nextIgnored.add(issueKey(issue));
     setIgnored(nextIgnored);
-    setAnalysis(analyzeText(text, nextIgnored));
+    setSelectedIssueId(null);
   };
 
   return (
@@ -312,97 +319,122 @@ function EditorPage() {
         <section className="hero">
           <h1>Mas mahusay na pagsulat sa Filipino</h1>
           <p>
-            Suriin ang iyong teksto at tumanggap ng malinaw na mungkahi para sa
-            mas wastong pagsulat.
+            Magsulat nang natural. Awtomatikong iho-highlight ng Akay ang mga
+            posibleng isyu habang nagta-type ka.
           </p>
           <span className="hero-accent" aria-hidden="true" />
         </section>
 
-        <section className="dashboard-grid">
-          <div className="dashboard-main">
-            <section className="editor-card" aria-label="Writing editor">
-              <div className="editor-toolbar">
-                <div className="heading-with-icon">
-                  <span className="document-icon" aria-hidden="true">▤</span>
-                  <h2>Isulat ang iyong teksto</h2>
-                </div>
-
-                <div className="toolbar-actions">
-                  {analysis && !editing && (
-                    <button className="button button-ghost" onClick={startEditing}>
-                      I-edit
-                    </button>
-                  )}
-                  <button
-                    className="button button-primary"
-                    onClick={runCheck}
-                    disabled={!text.trim()}
-                  >
-                    ✦ Suriin ang Teksto
-                  </button>
-                  <button
-                    className="button button-ghost"
-                    onClick={clearText}
-                    disabled={!text}
-                  >
-                    Burahin
-                  </button>
-                </div>
+        <section className="live-editor-layout">
+          <section className="editor-card" aria-label="Writing editor">
+            <div className="editor-toolbar">
+              <div className="heading-with-icon">
+                <span className="document-icon" aria-hidden="true">▤</span>
+                <h2>Isulat ang iyong teksto</h2>
               </div>
 
-              <div className="editor-surface">
-                {analysis && !editing ? (
-                  <div
-                    className="review-surface"
-                    role="button"
-                    tabIndex={0}
-                    onClick={startEditing}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        startEditing();
-                      }
-                    }}
-                    aria-label="I-edit ang sinuring teksto"
-                  >
-                    <HighlightedText text={text} issues={analysis.issues} />
+              <div className="toolbar-actions">
+                <span className="live-status">
+                  <i aria-hidden="true" />
+                  Sinusuri habang nagsusulat
+                </span>
+                <button
+                  className="button button-ghost"
+                  onClick={clearText}
+                  disabled={!text}
+                >
+                  Burahin
+                </button>
+              </div>
+            </div>
+
+            <div className="editor-surface live-editor-surface">
+              <div className="highlight-layer" aria-hidden="true">
+                <HighlightedText text={text} issues={analysis?.issues ?? []} />
+              </div>
+
+              <textarea
+                className="live-editor-input"
+                value={text}
+                onChange={(event) => updateText(event.target.value)}
+                onClick={selectIssueAtCaret}
+                onKeyUp={selectIssueAtCaret}
+                onSelect={selectIssueAtCaret}
+                placeholder="Magsimulang magsulat dito..."
+                spellCheck="false"
+                aria-label="Tekstong susuriin"
+              />
+
+              <span className="character-count">{text.length}/2,000</span>
+            </div>
+
+            {selectedIssue && (
+              <div className="context-suggestion" aria-live="polite">
+                <div className="context-suggestion-heading">
+                  <div>
+                    <span>Mungkahi · {selectedIssue.category}</span>
+                    <strong>
+                      {selectedIssue.original || '∅'} <b aria-hidden="true">→</b>{' '}
+                      {selectedIssue.replacement}
+                    </strong>
                   </div>
-                ) : (
-                  <textarea
-                    autoFocus={false}
-                    value={text}
-                    onChange={(event) => updateText(event.target.value)}
-                    placeholder="Magsimulang magsulat dito..."
-                    spellCheck="false"
-                    aria-label="Tekstong susuriin"
-                  />
-                )}
+                  <button
+                    className="context-close"
+                    onClick={() => setSelectedIssueId(null)}
+                    aria-label="Isara ang mungkahi"
+                  >
+                    ×
+                  </button>
+                </div>
 
-                <span className="character-count">{text.length}/2,000</span>
+                <p>{selectedIssue.explanation}</p>
+
+                <div className="suggestion-actions">
+                  <button
+                    className="button button-small button-primary"
+                    onClick={() => acceptIssue(selectedIssue)}
+                  >
+                    Tanggapin
+                  </button>
+                  <button
+                    className="button button-small button-ghost"
+                    onClick={() => ignoreIssue(selectedIssue)}
+                  >
+                    Huwag Pansinin
+                  </button>
+                </div>
               </div>
-            </section>
+            )}
+          </section>
 
+          <p className="editor-tip">
+            Pindutin ang naka-highlight na salita o bahagi ng pangungusap upang
+            makita ang paliwanag at mungkahing pagwawasto.
+          </p>
+
+          <section className="support-grid">
             <QualityPanel analysis={analysis} />
-          </div>
 
-          <div className="dashboard-side">
-            <SuggestionPanel
-              analysis={analysis}
-              onAccept={acceptIssue}
-              onIgnore={ignoreIssue}
-            />
+            <div className="support-links">
+              <a className="test-cta" href="#/tools">
+                <span className="test-cta-icon" aria-hidden="true">✦</span>
+                <span>
+                  <strong>Mga Tool sa Pagsulat</strong>
+                  <small>Rewrite / Tone Assistant at English–Filipino Helper.</small>
+                </span>
+                <span className="test-cta-arrow" aria-hidden="true">›</span>
+              </a>
 
-            <a className="test-cta" href="#/test">
-              <span className="test-cta-icon" aria-hidden="true">▤</span>
-              <span>
-                <strong>Subukan ang Test Mode</strong>
-                <small>
-                  Magsanay nang walang mungkahi habang nagsusulat.
-                </small>
-              </span>
-              <span className="test-cta-arrow" aria-hidden="true">›</span>
-            </a>
-          </div>
+              <a className="test-cta" href="#/test">
+                <span className="test-cta-icon" aria-hidden="true">▤</span>
+                <span>
+                  <strong>Subukan ang Test Mode</strong>
+                  <small>Magsanay nang walang mungkahi habang nagsusulat.</small>
+                </span>
+                <span className="test-cta-arrow" aria-hidden="true">›</span>
+              </a>
+            </div>
+          </section>
         </section>
 
         <p className="scope-note">
