@@ -497,25 +497,48 @@ textarea:focus-visible {
 }
 
 .live-editor-surface {
+  --editor-pad-top: 28px;
+  --editor-pad-x: 26px;
+  --editor-pad-bottom: 42px;
+  --editor-font-size: 1rem;
+  --editor-line-height: 1.85;
   min-height: 300px;
+}
+
+.highlight-layer,
+.live-editor-input {
+  padding:
+    var(--editor-pad-top)
+    var(--editor-pad-x)
+    var(--editor-pad-bottom) !important;
+  font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-size: var(--editor-font-size) !important;
+  font-weight: 400 !important;
+  line-height: var(--editor-line-height) !important;
+  letter-spacing: 0 !important;
+  font-variant-ligatures: none;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .highlight-layer {
   position: absolute;
   inset: 0;
   z-index: 1;
-  padding: 28px 26px 42px;
   overflow: hidden;
   pointer-events: none;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 
 .highlight-layer .review-text {
   margin: 0;
   color: #19335f;
-  font-size: 1rem;
-  line-height: 1.85;
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  white-space: inherit;
+  overflow-wrap: inherit;
+  word-break: inherit;
 }
 
 .live-editor-input {
@@ -525,7 +548,7 @@ textarea:focus-visible {
   color: transparent !important;
   caret-color: #19335f;
   background: transparent !important;
-  overflow-wrap: anywhere;
+  -webkit-text-size-adjust: 100%;
 }
 
 .live-editor-input::placeholder {
@@ -1506,8 +1529,10 @@ footer span:first-child {
     min-height: 240px !important;
   }
 
-  .highlight-layer {
-    padding: 22px 18px 42px;
+  .live-editor-surface {
+    --editor-pad-top: 22px;
+    --editor-pad-x: 18px;
+    --editor-pad-bottom: 42px;
   }
 
   .support-links {
