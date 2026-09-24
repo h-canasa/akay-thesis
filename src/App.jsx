@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { analyzeText, CATEGORY, issueKey } from './checker.js';
+import { analyzeText, CATEGORY, issueKey, normalizeEditorText } from './checker.js';
 
 const starterText = 'Kumain rin ako ng mangga saging at ubas';
 
@@ -272,9 +272,38 @@ function EditorPage() {
   ) ?? null;
 
   const updateText = (value) => {
-    setText(value.slice(0, 2000));
+    const normalized = normalizeEditorText(value).slice(0, 2000);
+    setText(normalized);
     setIgnored(new Set());
     setSelectedIssueId(null);
+  };
+
+  const pasteIntoEditor = (event) => {
+    const pasted = event.clipboardData?.getData('text/plain');
+    if (typeof pasted !== 'string') return;
+
+    event.preventDefault();
+
+    const input = event.currentTarget;
+    const start = input.selectionStart ?? text.length;
+    const end = input.selectionEnd ?? start;
+    const normalizedPaste = normalizeEditorText(pasted);
+    const available = Math.max(0, 2000 - (text.length - (end - start)));
+    const inserted = normalizedPaste.slice(0, available);
+    const nextText = text.slice(0, start) + inserted + text.slice(end);
+
+    updateText(nextText);
+
+    const caret = start + inserted.length;
+    window.requestAnimationFrame(() => {
+      input.focus();
+      input.setSelectionRange(caret, caret);
+      const layer = input.previousElementSibling;
+      if (layer) {
+        layer.scrollTop = input.scrollTop;
+        layer.scrollLeft = input.scrollLeft;
+      }
+    });
   };
 
   const clearText = () => {
@@ -320,8 +349,8 @@ function EditorPage() {
         <section className="hero">
           <h1>Mas mahusay na pagsulat sa Filipino</h1>
           <p>
-            Magsulat nang natural. Awtomatikong iho-highlight ng Akay ang mga
-            posibleng isyu habang nagta-type ka.
+            Mag-type o mag-paste ng teksto. Awtomatikong iho-highlight ng Akay ang
+            mga posibleng isyu habang nagsusulat ka.
           </p>
           <span className="hero-accent" aria-hidden="true" />
         </section>
@@ -409,6 +438,7 @@ function EditorPage() {
                   className="live-editor-input"
                   value={text}
                   onChange={(event) => updateText(event.target.value)}
+                  onPaste={pasteIntoEditor}
                   onClick={selectIssueAtClick}
                   onScroll={(event) => {
                     const layer = event.currentTarget.previousElementSibling;
