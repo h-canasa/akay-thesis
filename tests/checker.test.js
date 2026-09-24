@@ -26,10 +26,16 @@ test('detects hyphen rule for nag-aaral', () => {
   assert.equal(issue?.replacement, 'nag-aaral');
 });
 
-test('detects capitalization and ending punctuation', () => {
+test('detects capitalization without flagging unfinished current line punctuation', () => {
   const result = analyzeText('bumili ako ng mangga');
   assert.ok(result.issues.some((item) => item.ruleId === 'P1'));
-  assert.ok(result.issues.some((item) => item.ruleId === 'P3'));
+  assert.ok(!result.issues.some((item) => item.ruleId === 'P3'));
+});
+
+test('flags missing ending punctuation after the user starts a new line', () => {
+  const result = analyzeText('Bumili ako ng mangga\nSusunod na linya.');
+  const issue = result.issues.find((item) => item.ruleId === 'P3');
+  assert.equal(issue?.replacement, '.');
 });
 
 test('detects comma-separated list example', () => {
