@@ -8,7 +8,7 @@ function Logo() {
     <a className="brand" href="#/" aria-label="Akay home">
       <img
         className="brand-logo"
-        src={`${import.meta.env.BASE_URL}akay-logo.png`}
+        src={`${import.meta.env.BASE_URL}akay-logo-clean.webp`}
         alt="Akay — Kaagapay sa Wastong Pagsulat"
       />
     </a>
