@@ -84,6 +84,53 @@ function addParticleRule(list, text, first, second, ruleId) {
   }
 }
 
+function addDiyanRiyanRule(list, text) {
+  const regex = /\b(diyan|riyan)\b/gi;
+
+  for (const match of text.matchAll(regex)) {
+    const original = match[0];
+    const start = match.index;
+    const before = text.slice(0, start);
+
+    const sentenceBoundary = Math.max(
+      before.lastIndexOf('.'),
+      before.lastIndexOf('!'),
+      before.lastIndexOf('?'),
+      before.lastIndexOf('\n'),
+    );
+
+    const currentPhrase = before.slice(sentenceBoundary + 1);
+    const previousWords = currentPhrase.match(/[A-Za-zÀ-ÿÑñ-]+/g) ?? [];
+
+    let expected = 'diyan';
+
+    if (previousWords.length > 0) {
+      const previousWord = previousWords[previousWords.length - 1];
+      const lettersOnly = previousWord.replace(/[^A-Za-zÀ-ÿÑñ]/g, '');
+      const last = lettersOnly.slice(-1).toLowerCase();
+
+      if (/[aeiouwyáéíóú]/i.test(last)) {
+        expected = 'riyan';
+      }
+    }
+
+    if (original.toLowerCase() !== expected) {
+      list.push({
+        ruleId: 'G6',
+        category: CATEGORY.GRAMMAR,
+        start,
+        end: start + original.length,
+        original,
+        replacement: matchCase(original, expected),
+        explanation:
+          expected === 'riyan'
+            ? 'Sa masinop na gamit, gamitin ang “riyan” kapag ang sinusundang salita ay nagtatapos sa patinig, w, o y.'
+            : 'Sa masinop na gamit, gamitin ang “diyan” sa simula ng pangungusap o pagkatapos ng salitang nagtatapos sa ibang katinig.',
+      });
+    }
+  }
+}
+
 function removeOverlaps(issues) {
   const sorted = [...issues].sort((a, b) => a.start - b.start || (b.end - b.start) - (a.end - a.start));
   const accepted = [];
@@ -108,6 +155,7 @@ export function analyzeText(text, ignored = new Set()) {
 
   addParticleRule(issues, text, 'rin', 'din', 'G1');
   addParticleRule(issues, text, 'raw', 'daw', 'G2');
+  addDiyanRiyanRule(issues, text);
 
   const names = /\bSi\s+([A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿÑñ-]+)\s+at\s+([A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿÑñ-]+)\b/g;
   for (const match of text.matchAll(names)) {
