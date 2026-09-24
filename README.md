@@ -1,5 +1,7 @@
 # Akay
 
+Live demo: https://h-canasa.github.io/akay-thesis/
+
 **Kaagapay sa Wastong Pagsulat**
 
 Akay is a thesis prototype for a Filipino writing checker and practice web app. Version 1 focuses on a lightweight, browser-based demo with no accounts and no persistent storage.
