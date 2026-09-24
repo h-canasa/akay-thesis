@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { analyzeText, CATEGORY, issueKey, normalizeEditorText } from './checker.js';
 
 const starterText = 'Kumain rin ako ng mangga saging at ubas';
@@ -270,6 +270,8 @@ function QualityPanel({ analysis, compact = false }) {
 }
 
 function EditorPage() {
+  const editorInputRef = useRef(null);
+  const highlightLayerRef = useRef(null);
   const [text, setText] = useState(starterText);
   const [ignored, setIgnored] = useState(new Set());
   const [selectedIssueId, setSelectedIssueId] = useState(null);
@@ -282,6 +284,35 @@ function EditorPage() {
   const selectedIssue = analysis?.issues.find(
     (issue) => issueKey(issue) === selectedIssueId,
   ) ?? null;
+
+  useEffect(() => {
+    const input = editorInputRef.current;
+    const layer = highlightLayerRef.current;
+    if (!input || !layer) return undefined;
+
+    const syncGeometry = () => {
+      const scrollbarWidth = Math.max(0, input.offsetWidth - input.clientWidth);
+      layer.style.right = `${scrollbarWidth}px`;
+      layer.scrollTop = input.scrollTop;
+      layer.scrollLeft = input.scrollLeft;
+    };
+
+    syncGeometry();
+    const frame = window.requestAnimationFrame(syncGeometry);
+    const observer =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(syncGeometry)
+        : null;
+
+    observer?.observe(input);
+    window.addEventListener('resize', syncGeometry);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener('resize', syncGeometry);
+    };
+  }, [text]);
 
   const updateText = (value) => {
     const normalized = normalizeEditorText(value).slice(0, 2000);
@@ -310,8 +341,10 @@ function EditorPage() {
     window.requestAnimationFrame(() => {
       input.focus();
       input.setSelectionRange(caret, caret);
-      const layer = input.previousElementSibling;
+      const layer = highlightLayerRef.current;
       if (layer) {
+        const scrollbarWidth = Math.max(0, input.offsetWidth - input.clientWidth);
+        layer.style.right = `${scrollbarWidth}px`;
         layer.scrollTop = input.scrollTop;
         layer.scrollLeft = input.scrollLeft;
       }
@@ -432,7 +465,11 @@ function EditorPage() {
                 )}
 
               <div className="editor-surface live-editor-surface">
-                <div className="highlight-layer" aria-hidden="true">
+                <div
+                  ref={highlightLayerRef}
+                  className="highlight-layer"
+                  aria-hidden="true"
+                >
                   <HighlightedText
                     text={text}
                     issues={analysis?.issues ?? []}
@@ -441,13 +478,14 @@ function EditorPage() {
                 </div>
 
                 <textarea
+                  ref={editorInputRef}
                   className="live-editor-input"
                   value={text}
                   onChange={(event) => updateText(event.target.value)}
                   onPaste={pasteIntoEditor}
                   onClick={() => setSelectedIssueId(null)}
                   onScroll={(event) => {
-                    const layer = event.currentTarget.previousElementSibling;
+                    const layer = highlightLayerRef.current;
                     if (layer) {
                       layer.scrollTop = event.currentTarget.scrollTop;
                       layer.scrollLeft = event.currentTarget.scrollLeft;
