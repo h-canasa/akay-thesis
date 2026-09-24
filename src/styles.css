@@ -362,6 +362,9 @@ textarea:focus-visible {
   padding: 0;
   border-radius: 4px;
   background: transparent;
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
 .issue-marker.spelling {
@@ -525,7 +528,7 @@ textarea:focus-visible {
 .highlight-layer {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 3;
   overflow: hidden;
   pointer-events: none;
 }
