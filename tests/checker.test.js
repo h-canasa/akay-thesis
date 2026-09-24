@@ -49,9 +49,13 @@ test('distinguishes diyan and riyan usage', () => {
   const riyanIssue = afterVowel.issues.find((item) => item.ruleId === 'G6');
   assert.equal(riyanIssue?.replacement, 'riyan');
 
-  const afterConsonant = analyzeText('Maghintay riyan.');
+  const afterConsonant = analyzeText('Tumigil riyan.');
   const diyanIssue = afterConsonant.issues.find((item) => item.ruleId === 'G6');
   assert.equal(diyanIssue?.replacement, 'diyan');
+
+  const afterY = analyzeText('Maghintay diyan.');
+  const afterYIssue = afterY.issues.find((item) => item.ruleId === 'G6');
+  assert.equal(afterYIssue?.replacement, 'riyan');
 
   const sentenceInitial = analyzeText('Riyan ka muna.');
   const sentenceInitialIssue = sentenceInitial.issues.find((item) => item.ruleId === 'G6');
