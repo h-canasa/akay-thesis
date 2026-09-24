@@ -311,13 +311,21 @@ function EditorPage() {
 
               <div className="editor-surface">
                 {analysis && !editing ? (
-                  <button
+                  <div
                     className="review-surface"
+                    role="button"
+                    tabIndex={0}
                     onClick={startEditing}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        startEditing();
+                      }
+                    }}
                     aria-label="I-edit ang sinuring teksto"
                   >
                     <HighlightedText text={text} issues={analysis.issues} />
-                  </button>
+                  </div>
                 ) : (
                   <textarea
                     autoFocus={false}
