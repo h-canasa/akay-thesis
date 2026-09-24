@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzeText } from '../src/checker.js';
+import { analyzeText, normalizeEditorText } from '../src/checker.js';
 
 test('detects rin/din rule from the specification example', () => {
   const result = analyzeText('Kumain rin ako.');
@@ -60,4 +60,29 @@ test('distinguishes diyan and riyan usage', () => {
   const sentenceInitial = analyzeText('Riyan ka muna.');
   const sentenceInitialIssue = sentenceInitial.issues.find((item) => item.ruleId === 'G6');
   assert.equal(sentenceInitialIssue?.replacement, 'Diyan');
+});
+
+test('normalizes pasted text and still detects issues', () => {
+  const pasted = [
+    'Ang Aking Buhay Bilang Mag-aaral\r\n',
+    'Araw araw akong pumapasok mula lunes hanggang biyernes.\u00a0',
+    'Nuon pa man, kelangan naming magaral nang mabuti.\r\n',
+    'Sumama din ako at kumain rin kami. Pupunta daw sila.\r\n',
+  ].join('');
+
+  const normalized = normalizeEditorText(pasted);
+  assert.ok(!normalized.includes('\r'));
+  assert.ok(!normalized.includes('\u00a0'));
+
+  const result = analyzeText(normalized);
+  const replacements = result.issues.map((item) => item.replacement.toLowerCase());
+
+  assert.ok(replacements.includes('araw-araw'));
+  assert.ok(replacements.includes('noon'));
+  assert.ok(replacements.includes('kailangan'));
+  assert.ok(replacements.includes('mag-aral'));
+  assert.ok(replacements.includes('lunes'));
+  assert.ok(replacements.includes('biyernes'));
+  assert.ok(result.issues.some((item) => item.ruleId === 'G1'));
+  assert.ok(result.issues.some((item) => item.ruleId === 'G2'));
 });
