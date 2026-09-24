@@ -261,7 +261,6 @@ function EditorPage() {
   const [text, setText] = useState(starterText);
   const [ignored, setIgnored] = useState(new Set());
   const [selectedIssueId, setSelectedIssueId] = useState(null);
-  const [popoverPoint, setPopoverPoint] = useState(null);
 
   const analysis = useMemo(
     () => (text.trim() ? analyzeText(text, ignored) : null),
@@ -276,14 +275,12 @@ function EditorPage() {
     setText(value.slice(0, 2000));
     setIgnored(new Set());
     setSelectedIssueId(null);
-    setPopoverPoint(null);
   };
 
   const clearText = () => {
     setText('');
     setIgnored(new Set());
     setSelectedIssueId(null);
-    setPopoverPoint(null);
   };
 
   const selectIssueAtClick = (event) => {
@@ -297,29 +294,7 @@ function EditorPage() {
       return position >= item.start && position <= item.end;
     });
 
-    if (!issue) {
-      setSelectedIssueId(null);
-      setPopoverPoint(null);
-      return;
-    }
-
-    const surface = event.currentTarget.parentElement;
-    const rect = surface.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
-    const halfWidth = 180;
-    const x = Math.min(
-      Math.max(clickX, halfWidth + 14),
-      Math.max(halfWidth + 14, rect.width - halfWidth - 14),
-    );
-    const estimatedHeight = 220;
-    const y =
-      clickY + estimatedHeight + 34 > rect.height
-        ? Math.max(18, clickY - estimatedHeight - 18)
-        : clickY + 34;
-
-    setSelectedIssueId(issueKey(issue));
-    setPopoverPoint({ x, y });
+    setSelectedIssueId(issue ? issueKey(issue) : null);
   };
 
   const acceptIssue = (issue) => {
@@ -328,7 +303,6 @@ function EditorPage() {
     setText(nextText);
     setIgnored(new Set());
     setSelectedIssueId(null);
-    setPopoverPoint(null);
   };
 
   const ignoreIssue = (issue) => {
@@ -336,7 +310,6 @@ function EditorPage() {
     nextIgnored.add(issueKey(issue));
     setIgnored(nextIgnored);
     setSelectedIssueId(null);
-    setPopoverPoint(null);
   };
 
   return (
@@ -394,13 +367,9 @@ function EditorPage() {
 
                 <span className="character-count">{text.length}/2,000</span>
 
-                {selectedIssue && popoverPoint && (
+                {selectedIssue && (
                   <div
-                    className="context-suggestion context-popover"
-                    style={{
-                      '--popover-x': `${popoverPoint.x}px`,
-                      '--popover-y': `${popoverPoint.y}px`,
-                    }}
+                    className="context-suggestion context-drawer"
                     aria-live="polite"
                   >
                     <div className="context-suggestion-heading">
@@ -416,8 +385,7 @@ function EditorPage() {
                         onClick={(event) => {
                           event.stopPropagation();
                           setSelectedIssueId(null);
-                          setPopoverPoint(null);
-                        }}
+                                              }}
                         aria-label="Isara ang mungkahi"
                       >
                         ×
