@@ -25,6 +25,9 @@ function Header({ page }) {
           <a className={`nav-link ${page === 'editor' ? 'active' : ''}`} href="#/">
             Home
           </a>
+          <a className={`nav-link ${page === 'tools' ? 'active' : ''}`} href="#/tools">
+            Mga Tool
+          </a>
           <a className={`nav-link ${page === 'test' ? 'active' : ''}`} href="#/test">
             Test Mode
           </a>
@@ -163,7 +166,7 @@ function SuggestionPanel({ analysis, onAccept, onIgnore }) {
 }
 
 function QualityPanel({ analysis }) {
-  const score = analysis?.score;
+  const score = analysis?.score ?? 0;
   const counts = analysis?.counts ?? {
     [CATEGORY.SPELLING]: 0,
     [CATEGORY.GRAMMAR]: 0,
@@ -171,10 +174,45 @@ function QualityPanel({ analysis }) {
   };
 
   const rows = [
-    ['Baybay', counts[CATEGORY.SPELLING]],
-    ['Gramatika', counts[CATEGORY.GRAMMAR]],
-    ['Bantas at Malaking Titik', counts[CATEGORY.PUNCTUATION]],
+    {
+      label: 'Baybay',
+      type: 'spelling',
+      value: analysis ? Math.max(0, 100 - counts[CATEGORY.SPELLING] * 12) : 0,
+    },
+    {
+      label: 'Gramatika',
+      type: 'grammar',
+      value: analysis ? Math.max(0, 100 - counts[CATEGORY.GRAMMAR] * 12) : 0,
+    },
+    {
+      label: 'Bantas at Malaking Titik',
+      type: 'punctuation',
+      value: analysis ? Math.max(0, 100 - counts[CATEGORY.PUNCTUATION] * 12) : 0,
+    },
   ];
+
+  const [animatedScore, setAnimatedScore] = useState(0);
+  const [animatedRows, setAnimatedRows] = useState([0, 0, 0]);
+
+  useEffect(() => {
+    setAnimatedScore(0);
+    setAnimatedRows([0, 0, 0]);
+
+    if (!analysis) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setAnimatedScore(score);
+      setAnimatedRows(rows.map((row) => row.value));
+    }, 60);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    analysis,
+    score,
+    counts[CATEGORY.SPELLING],
+    counts[CATEGORY.GRAMMAR],
+    counts[CATEGORY.PUNCTUATION],
+  ]);
 
   return (
     <section className="quality-card">
@@ -192,7 +230,7 @@ function QualityPanel({ analysis }) {
       <div className="quality-content">
         <div
           className={`score-ring ${!analysis ? 'score-ring-idle' : ''}`}
-          style={{ '--score': `${(score ?? 0) * 3.6}deg` }}
+          style={{ '--ring-progress': `${animatedScore * 3.6}deg` }}
         >
           <div>
             <strong>{analysis ? `${score}%` : '—'}</strong>
@@ -201,13 +239,16 @@ function QualityPanel({ analysis }) {
         </div>
 
         <div className="quality-rows">
-          {rows.map(([label, count]) => (
-            <div className="quality-row" key={label}>
-              <span>{label}</span>
+          {rows.map((row, index) => (
+            <div className="quality-row" key={row.label}>
+              <span>{row.label}</span>
               <div className="quality-line">
-                <i className={count > 0 ? 'has-issue' : ''} />
+                <i
+                  className={`quality-fill ${row.type}`}
+                  style={{ '--fill': `${animatedRows[index]}%` }}
+                />
               </div>
-              <strong>{analysis ? `${count} isyu` : '—'}</strong>
+              <strong>{analysis ? `${row.value}%` : '—'}</strong>
             </div>
           ))}
         </div>
@@ -304,7 +345,7 @@ function EditorPage() {
                     onClick={clearText}
                     disabled={!text}
                   >
-                    Linisin
+                    Burahin
                   </button>
                 </div>
               </div>
@@ -368,6 +409,163 @@ function EditorPage() {
           Version 1: deterministic na tuntunin muna; hindi pa kasama ang malawakang
           POS-based na pagsusuri para sa <em>ng/nang</em> at <em>may/mayroon</em>.
         </p>
+      </main>
+
+      <Footer />
+    </>
+  );
+}
+
+const toneProfiles = {
+  pormal: {
+    label: 'Pormal',
+    replacements: [
+      [/\\bgusto ko\\b/gi, 'nais ko'],
+      [/\\bpero\\b/gi, 'ngunit'],
+      [/\\bkasi\\b/gi, 'sapagkat'],
+      [/\\bpara\\b/gi, 'upang'],
+      [/\\bdapat nating\\b/gi, 'nararapat nating'],
+    ],
+  },
+  akademiko: {
+    label: 'Akademiko',
+    replacements: [
+      [/\\bsa tingin ko\\b/gi, 'batay sa pagsusuri'],
+      [/\\bpero\\b/gi, 'gayunpaman'],
+      [/\\bkasi\\b/gi, 'sapagkat'],
+      [/\\bpara\\b/gi, 'upang'],
+      [/\\bmahalaga\\b/gi, 'mahalagang salik'],
+    ],
+  },
+  payak: {
+    label: 'Payak',
+    replacements: [
+      [/\\bnararapat\\b/gi, 'dapat'],
+      [/\\bgayunpaman\\b/gi, 'pero'],
+      [/\\bsapagkat\\b/gi, 'dahil'],
+      [/\\bnagnanais\\b/gi, 'gusto'],
+    ],
+  },
+};
+
+const helperEntries = [
+  { english: 'environment', filipino: 'kapaligiran', tip: 'Gamitin kapag tumutukoy sa kalikasan o mga bagay na nakapaligid sa isang lugar.' },
+  { english: 'community', filipino: 'pamayanan / komunidad', tip: 'Mas katutubong Filipino ang “pamayanan”; karaniwan ding ginagamit ang “komunidad”.' },
+  { english: 'responsibility', filipino: 'pananagutan', tip: 'Ang “pananagutan” ay ang obligasyong tuparin o panagutan ang isang gawain.' },
+  { english: 'education', filipino: 'edukasyon / pag-aaral', tip: 'Gamitin ang “pag-aaral” kung tumutukoy sa proseso ng pagkatuto.' },
+  { english: 'improve', filipino: 'pagbutihin', tip: 'Halimbawa: “Pagbutihin ang paraan ng pagsulat.”' },
+  { english: 'support', filipino: 'suporta / pagtulong', tip: 'Maaaring gamitin ang “pagtulong” kung nais ng mas payak na Filipino.' },
+  { english: 'student', filipino: 'mag-aaral', tip: 'Mas pormal at Filipino ang “mag-aaral” kaysa “estudyante”.' },
+  { english: 'teacher', filipino: 'guro', tip: 'Karaniwang katumbas ng “teacher” sa Filipino.' },
+  { english: 'writing', filipino: 'pagsulat', tip: 'Gamitin sa konteksto ng kasanayan o proseso ng pagsusulat.' },
+  { english: 'important', filipino: 'mahalaga', tip: 'Halimbawa: “Mahalaga ang wastong paggamit ng wika.”' },
+];
+
+function rewriteWithTone(text, tone) {
+  if (!text.trim()) return '';
+  const profile = toneProfiles[tone];
+  let output = text.trim();
+
+  profile.replacements.forEach(([pattern, replacement]) => {
+    output = output.replace(pattern, replacement);
+  });
+
+  if (!/[.!?]$/.test(output)) output += '.';
+  return output[0].toUpperCase() + output.slice(1);
+}
+
+function ToolsPage() {
+  const [tone, setTone] = useState('pormal');
+  const [rewriteInput, setRewriteInput] = useState('Dapat nating alagaan ang kapaligiran para sa susunod na henerasyon.');
+  const [rewriteOutput, setRewriteOutput] = useState('');
+  const [helperQuery, setHelperQuery] = useState('');
+
+  const helperResult = helperEntries.find((entry) =>
+    entry.english.includes(helperQuery.trim().toLowerCase()),
+  );
+
+  const runRewrite = () => {
+    setRewriteOutput(rewriteWithTone(rewriteInput, tone));
+  };
+
+  return (
+    <>
+      <Header page="tools" />
+
+      <main className="page-shell tools-shell">
+        <section className="tools-hero">
+          <h1>Mga Tool sa Pagsulat</h1>
+          <p>Mga simpleng pantulong para sa tono, salin, at paggamit ng salita.</p>
+          <span className="hero-accent" aria-hidden="true" />
+        </section>
+
+        <section className="tools-grid">
+          <article className="tool-card">
+            <div className="tool-card-heading">
+              <div>
+                <span className="tool-kicker">Rewrite / Tone Assistant</span>
+                <h2>Pumili ng tono</h2>
+              </div>
+              <select value={tone} onChange={(event) => setTone(event.target.value)}>
+                {Object.entries(toneProfiles).map(([value, profile]) => (
+                  <option value={value} key={value}>{profile.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <label htmlFor="rewrite-input">Pangungusap</label>
+            <textarea
+              id="rewrite-input"
+              value={rewriteInput}
+              onChange={(event) => setRewriteInput(event.target.value)}
+              placeholder="Maglagay ng pangungusap..."
+            />
+
+            <div className="tool-actions">
+              <span>Rule-based prototype lamang; hindi generative AI.</span>
+              <button className="button button-primary" onClick={runRewrite} disabled={!rewriteInput.trim()}>
+                Gumawa ng Alternatibo
+              </button>
+            </div>
+
+            <div className="tool-output" aria-live="polite">
+              <span>Alternatibong bersyon</span>
+              <p>{rewriteOutput || 'Lalabas dito ang alternatibong bersyon.'}</p>
+            </div>
+          </article>
+
+          <article className="tool-card">
+            <div className="tool-card-heading">
+              <div>
+                <span className="tool-kicker">English–Filipino Helper / Insights</span>
+                <h2>Hanapin ang katumbas na salita</h2>
+              </div>
+            </div>
+
+            <label htmlFor="helper-query">English word</label>
+            <input
+              id="helper-query"
+              className="tool-input"
+              value={helperQuery}
+              onChange={(event) => setHelperQuery(event.target.value)}
+              placeholder="Hal. environment"
+            />
+
+            <div className="helper-result" aria-live="polite">
+              {!helperQuery.trim() ? (
+                <p>Subukan ang: environment, community, student, teacher, writing.</p>
+              ) : helperResult ? (
+                <>
+                  <span>{helperResult.english}</span>
+                  <strong>{helperResult.filipino}</strong>
+                  <p>{helperResult.tip}</p>
+                </>
+              ) : (
+                <p>Wala pa sa prototype dictionary ang salitang ito.</p>
+              )}
+            </div>
+          </article>
+        </section>
       </main>
 
       <Footer />
@@ -516,6 +714,7 @@ function Footer() {
       <span>Akay</span>
       <span>Kaagapay sa Wastong Pagsulat</span>
       <span>Thesis Prototype · Version 1</span>
+      <span>Mga Proponent: Aira · Angela · Kharl</span>
     </footer>
   );
 }
@@ -529,10 +728,13 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  const page = useMemo(
-    () => (hash.startsWith('#/test') ? 'test' : 'editor'),
-    [hash],
-  );
+  const page = useMemo(() => {
+    if (hash.startsWith('#/test')) return 'test';
+    if (hash.startsWith('#/tools')) return 'tools';
+    return 'editor';
+  }, [hash]);
 
-  return page === 'test' ? <TestPage /> : <EditorPage />;
+  if (page === 'test') return <TestPage />;
+  if (page === 'tools') return <ToolsPage />;
+  return <EditorPage />;
 }
