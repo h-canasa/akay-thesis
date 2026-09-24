@@ -1,3 +1,10 @@
+export function normalizeEditorText(value = '') {
+  return String(value)
+    .replace(/\r\n?/g, '\n')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[\u200b-\u200d\ufeff]/g, '');
+}
+
 const CATEGORY = {
   SPELLING: 'Baybay',
   GRAMMAR: 'Gramatika',
