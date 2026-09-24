@@ -55,79 +55,90 @@ function pushRegexIssues(list, text, ruleId, regex, replacement, explanation, ca
   }
 }
 
-function addParticleRule(list, text, first, second, ruleId) {
-  const regex = new RegExp(`\\b([A-Za-zÀ-ÿÑñ-]+)\\s+(${first}|${second})\\b`, 'gi');
-  for (const match of text.matchAll(regex)) {
-    const previousWord = match[1];
-    const particle = match[2];
-    const lettersOnly = previousWord.replace(/[^A-Za-zÀ-ÿÑñ]/g, '');
-    const last = lettersOnly.slice(-1).toLowerCase();
-    const useFirst = /[aeiouwyáéíóú]/i.test(last);
-    const expected = useFirst ? first : second;
+function previousWordInSentence(text, start) {
+  const before = text.slice(0, start);
+  const sentenceBoundary = Math.max(
+    before.lastIndexOf('.'),
+    before.lastIndexOf('!'),
+    before.lastIndexOf('?'),
+    before.lastIndexOf('\n'),
+  );
 
-    if (particle.toLowerCase() !== expected) {
-      const particleOffset = match[0].toLowerCase().lastIndexOf(particle.toLowerCase());
-      const start = match.index + particleOffset;
-      list.push({
-        ruleId,
-        category: CATEGORY.GRAMMAR,
-        start,
-        end: start + particle.length,
-        original: particle,
-        replacement: matchCase(particle, expected),
-        explanation:
-          ruleId === 'G1'
-            ? 'Gamitin ang “rin” pagkatapos ng patinig, w, o y; gamitin ang “din” pagkatapos ng ibang katinig.'
-            : 'Gamitin ang “raw” pagkatapos ng patinig, w, o y; gamitin ang “daw” pagkatapos ng ibang katinig.',
-      });
-    }
-  }
+  const currentPhrase = before.slice(sentenceBoundary + 1);
+  const words = currentPhrase.match(/[A-Za-zÀ-ÿÑñ-]+/g) ?? [];
+  return words.length ? words[words.length - 1] : '';
 }
 
-function addDiyanRiyanRule(list, text) {
-  const regex = /\b(diyan|riyan)\b/gi;
+function shouldUseRForm(previousWord, { particleException = false } = {}) {
+  if (!previousWord) return false;
+
+  const normalized = previousWord
+    .replace(/[^A-Za-zÀ-ÿÑñ]/g, '')
+    .toLowerCase();
+
+  if (!normalized) return false;
+
+  // Tradisyonal na kataliwasan sa din/rin at daw/raw na binanggit ng KWF:
+  // kapag nagtatapos sa -ri, -ra, -raw, o -ray, nananatili ang D-form.
+  if (particleException && /(ri|ra|raw|ray)$/i.test(normalized)) {
+    return false;
+  }
+
+  const last = normalized.slice(-1);
+  return /[aeiouwyáéíóú]/i.test(last);
+}
+
+function addDRAlternationRule(
+  list,
+  text,
+  dForm,
+  rForm,
+  ruleId,
+  {
+    particleException = false,
+    allowSentenceInitial = false,
+  } = {},
+) {
+  const regex = new RegExp(`\\b(${dForm}|${rForm})\\b`, 'gi');
 
   for (const match of text.matchAll(regex)) {
     const original = match[0];
     const start = match.index;
-    const before = text.slice(0, start);
+    const previousWord = previousWordInSentence(text, start);
 
-    const sentenceBoundary = Math.max(
-      before.lastIndexOf('.'),
-      before.lastIndexOf('!'),
-      before.lastIndexOf('?'),
-      before.lastIndexOf('\n'),
-    );
+    // Din/rin at daw/raw are particles; without a preceding word there is
+    // not enough local context for this mechanical rule to make a correction.
+    if (!previousWord && !allowSentenceInitial) continue;
 
-    const currentPhrase = before.slice(sentenceBoundary + 1);
-    const previousWords = currentPhrase.match(/[A-Za-zÀ-ÿÑñ-]+/g) ?? [];
+    const useR = shouldUseRForm(previousWord, { particleException });
+    const expected = useR ? rForm : dForm;
 
-    let expected = 'diyan';
+    if (original.toLowerCase() === expected) continue;
 
-    if (previousWords.length > 0) {
-      const previousWord = previousWords[previousWords.length - 1];
-      const lettersOnly = previousWord.replace(/[^A-Za-zÀ-ÿÑñ]/g, '');
-      const last = lettersOnly.slice(-1).toLowerCase();
-
-      if (/[aeiouwyáéíóú]/i.test(last)) {
-        expected = 'riyan';
-      }
+    let explanation;
+    if (particleException && previousWord && /(ri|ra|raw|ray)$/i.test(previousWord)) {
+      explanation =
+        `Sa tradisyonal na tuntunin, nananatili ang “${dForm}” pagkatapos ng salitang nagtatapos sa -ri, -ra, -raw, o -ray.`;
+    } else if (useR) {
+      explanation =
+        `Gamitin ang “${rForm}” pagkatapos ng salitang nagtatapos sa patinig, w, o y.`;
+    } else if (!previousWord) {
+      explanation =
+        `Gamitin ang “${dForm}” kapag nasa simula ng pangungusap.`;
+    } else {
+      explanation =
+        `Gamitin ang “${dForm}” pagkatapos ng salitang nagtatapos sa ibang katinig.`;
     }
 
-    if (original.toLowerCase() !== expected) {
-      list.push({
-        ruleId: 'G6',
-        category: CATEGORY.GRAMMAR,
-        start,
-        end: start + original.length,
-        original,
-        replacement: matchCase(original, expected),
-        explanation:
-          expected === 'riyan'
-            ? 'Sa masinop na gamit, gamitin ang “riyan” kapag ang sinusundang salita ay nagtatapos sa patinig, w, o y.'
-            : 'Sa masinop na gamit, gamitin ang “diyan” sa simula ng pangungusap o pagkatapos ng salitang nagtatapos sa ibang katinig.',
-      });
-    }
+    list.push({
+      ruleId,
+      category: CATEGORY.GRAMMAR,
+      start,
+      end: start + original.length,
+      original,
+      replacement: matchCase(original, expected),
+      explanation,
+    });
   }
 }
 
@@ -153,9 +164,21 @@ export function analyzeText(text, ignored = new Set()) {
     pushRegexIssues(issues, text, ruleId, regex, replacement, explanation, CATEGORY.SPELLING);
   }
 
-  addParticleRule(issues, text, 'rin', 'din', 'G1');
-  addParticleRule(issues, text, 'raw', 'daw', 'G2');
-  addDiyanRiyanRule(issues, text);
+  addDRAlternationRule(issues, text, 'din', 'rin', 'G1', {
+    particleException: true,
+  });
+  addDRAlternationRule(issues, text, 'daw', 'raw', 'G2', {
+    particleException: true,
+  });
+  addDRAlternationRule(issues, text, 'dito', 'rito', 'G6', {
+    allowSentenceInitial: true,
+  });
+  addDRAlternationRule(issues, text, 'diyan', 'riyan', 'G6', {
+    allowSentenceInitial: true,
+  });
+  addDRAlternationRule(issues, text, 'doon', 'roon', 'G6', {
+    allowSentenceInitial: true,
+  });
 
   const names = /\bSi\s+([A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿÑñ-]+)\s+at\s+([A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿÑñ-]+)\b/g;
   for (const match of text.matchAll(names)) {
