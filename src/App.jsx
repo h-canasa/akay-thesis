@@ -350,26 +350,9 @@ function EditorPage() {
                 </div>
               </div>
 
-              <div className="editor-surface live-editor-surface">
-                <div className="highlight-layer" aria-hidden="true">
-                  <HighlightedText text={text} issues={analysis?.issues ?? []} />
-                </div>
-
-                <textarea
-                  className="live-editor-input"
-                  value={text}
-                  onChange={(event) => updateText(event.target.value)}
-                  onClick={selectIssueAtClick}
-                  placeholder="Magsimulang magsulat dito..."
-                  spellCheck="false"
-                  aria-label="Tekstong susuriin"
-                />
-
-                <span className="character-count">{text.length}/2,000</span>
-
                 {selectedIssue && (
                   <div
-                    className="context-suggestion context-drawer"
+                    className="context-suggestion context-inline"
                     aria-live="polite"
                   >
                     <div className="context-suggestion-heading">
@@ -385,7 +368,7 @@ function EditorPage() {
                         onClick={(event) => {
                           event.stopPropagation();
                           setSelectedIssueId(null);
-                                              }}
+                        }}
                         aria-label="Isara ang mungkahi"
                       >
                         ×
@@ -416,6 +399,24 @@ function EditorPage() {
                     </div>
                   </div>
                 )}
+
+              <div className="editor-surface live-editor-surface">
+                <div className="highlight-layer" aria-hidden="true">
+                  <HighlightedText text={text} issues={analysis?.issues ?? []} />
+                </div>
+
+                <textarea
+                  className="live-editor-input"
+                  value={text}
+                  onChange={(event) => updateText(event.target.value)}
+                  onClick={selectIssueAtClick}
+                  placeholder="Magsimulang magsulat dito..."
+                  spellCheck="false"
+                  aria-label="Tekstong susuriin"
+                />
+
+                <span className="character-count">{text.length}/2,000</span>
+
               </div>
             </section>
 
