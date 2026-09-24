@@ -128,7 +128,7 @@ textarea:focus-visible {
 
 .nav-link {
   position: relative;
-  padding: 9px 2px 7px;
+  padding: 6px 2px 5px;
   color: #4d6085;
   font-size: 0.88rem;
   font-weight: 600;
@@ -144,7 +144,7 @@ textarea:focus-visible {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 1px;
+  bottom: 0;
   height: 3px;
   border-radius: 99px;
   background: var(--blue);
@@ -155,8 +155,8 @@ textarea:focus-visible {
   z-index: 1;
   right: -8px;
   bottom: -2px;
-  width: min(46vw, 560px);
-  max-height: 92px;
+  width: min(48vw, 610px);
+  max-height: 88px;
   object-fit: contain;
   object-position: right bottom;
   pointer-events: none;
@@ -180,7 +180,7 @@ textarea:focus-visible {
 .completion-card h1 {
   margin: 0;
   color: var(--navy);
-  font-size: clamp(1.8rem, 2.55vw, 2.75rem);
+  font-size: clamp(1.65rem, 2.2vw, 2.35rem);
   line-height: 1.08;
   letter-spacing: -0.035em;
 }
@@ -191,7 +191,7 @@ textarea:focus-visible {
   max-width: 690px;
   margin: 7px 0 0;
   color: #4f638b;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   line-height: 1.5;
 }
 
@@ -423,12 +423,12 @@ textarea:focus-visible {
 
 .empty-suggestions {
   min-height: 365px;
-  padding: 46px 34px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .empty-suggestions-icon {
@@ -449,7 +449,7 @@ textarea:focus-visible {
 }
 
 .empty-suggestions p {
-  max-width: 270px;
+  max-width: 300px;
   margin: 6px 0 0;
   color: var(--muted);
   font-size: 0.78rem;
