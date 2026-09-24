@@ -7,9 +7,15 @@ function Logo() {
   return (
     <a className="brand" href="#/" aria-label="Akay home">
       <img
-        src={`${import.meta.env.BASE_URL}akay-logo.png`}
-        alt="Akay — Kaagapay sa Wastong Pagsulat"
+        className="brand-mark"
+        src={`${import.meta.env.BASE_URL}akay-mark.webp`}
+        alt=""
+        aria-hidden="true"
       />
+      <span className="brand-copy">
+        <strong>Akay</strong>
+        <small>Kaagapay sa Wastong Pagsulat</small>
+      </span>
     </a>
   );
 }
@@ -19,23 +25,22 @@ function Header({ page }) {
     <header className="site-header">
       <div className="header-inner">
         <Logo />
+
         <nav className="nav-actions" aria-label="Pangunahing nabigasyon">
           <a className={`nav-link ${page === 'editor' ? 'active' : ''}`} href="#/">
-            Editor
+            Home
           </a>
           <a className={`nav-link ${page === 'test' ? 'active' : ''}`} href="#/test">
             Test Mode
           </a>
         </nav>
 
-        <div className="header-art" aria-hidden="true">
-          <span className="header-sun" />
-          <span className="mountain mountain-back" />
-          <span className="mountain mountain-front" />
-          <span className="flag-wave flag-blue" />
-          <span className="flag-wave flag-yellow" />
-          <span className="flag-wave flag-red" />
-        </div>
+        <img
+          className="header-art-image"
+          src={`${import.meta.env.BASE_URL}akay-header-art.webp`}
+          alt=""
+          aria-hidden="true"
+        />
       </div>
     </header>
   );
@@ -49,17 +54,34 @@ function HighlightedText({ text, issues }) {
 
   issues.forEach((issue, index) => {
     if (issue.start > cursor) {
-      chunks.push(<React.Fragment key={`text-${index}`}>{text.slice(cursor, issue.start)}</React.Fragment>);
+      chunks.push(
+        <React.Fragment key={`text-${index}`}>
+          {text.slice(cursor, issue.start)}
+        </React.Fragment>,
+      );
     }
 
     if (issue.start === issue.end) {
       chunks.push(
-        <span className="issue-marker insertion" key={`issue-${index}`} title={issue.explanation}>•</span>,
+        <span
+          className="issue-marker insertion"
+          key={`issue-${index}`}
+          title={issue.explanation}
+        >
+          •
+        </span>,
       );
     } else {
+      const type =
+        issue.category === CATEGORY.GRAMMAR
+          ? 'grammar'
+          : issue.category === CATEGORY.SPELLING
+            ? 'spelling'
+            : 'punctuation';
+
       chunks.push(
         <mark
-          className={`issue-marker ${issue.category === CATEGORY.GRAMMAR ? 'grammar' : issue.category === CATEGORY.SPELLING ? 'spelling' : 'punctuation'}`}
+          className={`issue-marker ${type}`}
           key={`issue-${index}`}
           title={issue.explanation}
         >
@@ -67,28 +89,176 @@ function HighlightedText({ text, issues }) {
         </mark>,
       );
     }
+
     cursor = Math.max(cursor, issue.end);
   });
 
-  if (cursor < text.length) chunks.push(<React.Fragment key="tail">{text.slice(cursor)}</React.Fragment>);
-  return <p className="preview-text">{chunks}</p>;
+  if (cursor < text.length) {
+    chunks.push(<React.Fragment key="tail">{text.slice(cursor)}</React.Fragment>);
+  }
+
+  return <p className="review-text">{chunks}</p>;
+}
+
+function SuggestionPanel({ analysis, onAccept, onIgnore }) {
+  const issues = analysis?.issues ?? [];
+
+  return (
+    <aside className="suggestions-card">
+      <div className="panel-heading">
+        <div className="heading-with-icon">
+          <span className="panel-icon" aria-hidden="true">💡</span>
+          <h2>Mga Mungkahi</h2>
+        </div>
+        <span className="count-badge">{analysis ? issues.length : 0}</span>
+      </div>
+
+      {!analysis ? (
+        <div className="empty-suggestions">
+          <div className="empty-suggestions-icon">✓</div>
+          <strong>Handa ang Akay.</strong>
+          <p>I-click ang “Suriin ang Teksto” para makita rito ang mga mungkahi.</p>
+        </div>
+      ) : issues.length === 0 ? (
+        <div className="empty-suggestions success">
+          <div className="empty-suggestions-icon">✓</div>
+          <strong>Walang nakitang isyu.</strong>
+          <p>Walang mungkahi sa kasalukuyang saklaw ng Version 1 checker.</p>
+        </div>
+      ) : (
+        <div className="suggestion-list">
+          {issues.map((issue, index) => (
+            <article
+              className={`suggestion suggestion-${issue.category === CATEGORY.PUNCTUATION ? 'punctuation' : issue.category === CATEGORY.GRAMMAR ? 'grammar' : 'spelling'}`}
+              key={`${issue.ruleId}-${issue.start}-${index}`}
+            >
+              <div className="suggestion-topline">
+                <span className="rule-tag">{issue.ruleId}</span>
+                <span>{issue.category}</span>
+              </div>
+
+              <div className="correction">
+                <span className="wrong">{issue.original || '∅'}</span>
+                <span aria-hidden="true">→</span>
+                <strong>{issue.replacement}</strong>
+              </div>
+
+              <p>{issue.explanation}</p>
+
+              <div className="suggestion-actions">
+                <button
+                  className="button button-small button-primary"
+                  onClick={() => onAccept(issue)}
+                >
+                  Tanggapin
+                </button>
+                <button
+                  className="button button-small button-ghost"
+                  onClick={() => onIgnore(issue)}
+                >
+                  Huwag Pansinin
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function QualityPanel({ analysis }) {
+  const score = analysis?.score;
+  const counts = analysis?.counts ?? {
+    [CATEGORY.SPELLING]: 0,
+    [CATEGORY.GRAMMAR]: 0,
+    [CATEGORY.PUNCTUATION]: 0,
+  };
+
+  const rows = [
+    ['Baybay', counts[CATEGORY.SPELLING]],
+    ['Gramatika', counts[CATEGORY.GRAMMAR]],
+    ['Bantas at Malaking Titik', counts[CATEGORY.PUNCTUATION]],
+  ];
+
+  return (
+    <section className="quality-card">
+      <div className="panel-heading quality-heading">
+        <div className="heading-with-icon">
+          <span className="bars-icon" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+          <h2>Kalidad ng Pagsulat</h2>
+        </div>
+      </div>
+
+      <div className="quality-content">
+        <div
+          className={`score-ring ${!analysis ? 'score-ring-idle' : ''}`}
+          style={{ '--score': `${(score ?? 0) * 3.6}deg` }}
+        >
+          <div>
+            <strong>{analysis ? `${score}%` : '—'}</strong>
+            <span>{analysis ? analysis.level : 'Hindi pa nasusuri'}</span>
+          </div>
+        </div>
+
+        <div className="quality-rows">
+          {rows.map(([label, count]) => (
+            <div className="quality-row" key={label}>
+              <span>{label}</span>
+              <div className="quality-line">
+                <i className={count > 0 ? 'has-issue' : ''} />
+              </div>
+              <strong>{analysis ? `${count} isyu` : '—'}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function EditorPage() {
   const [text, setText] = useState(starterText);
   const [analysis, setAnalysis] = useState(null);
   const [ignored, setIgnored] = useState(new Set());
+  const [editing, setEditing] = useState(true);
 
   const runCheck = () => {
+    const next = analyzeText(text);
     setIgnored(new Set());
-    setAnalysis(analyzeText(text));
+    setAnalysis(next);
+    setEditing(false);
+  };
+
+  const startEditing = () => {
+    setEditing(true);
+  };
+
+  const updateText = (value) => {
+    setText(value);
+    setAnalysis(null);
+    setIgnored(new Set());
+    setEditing(true);
+  };
+
+  const clearText = () => {
+    setText('');
+    setAnalysis(null);
+    setIgnored(new Set());
+    setEditing(true);
   };
 
   const acceptIssue = (issue) => {
-    const nextText = text.slice(0, issue.start) + issue.replacement + text.slice(issue.end);
+    const nextText =
+      text.slice(0, issue.start) + issue.replacement + text.slice(issue.end);
     setText(nextText);
     setIgnored(new Set());
     setAnalysis(analyzeText(nextText));
+    setEditing(false);
   };
 
   const ignoreIssue = (issue) => {
@@ -101,134 +271,102 @@ function EditorPage() {
   return (
     <>
       <Header page="editor" />
+
       <main className="page-shell">
         <section className="hero">
-          <span className="eyebrow">Filipino Writing Checker</span>
-          <h1>Sumulat nang may kumpiyansa.</h1>
+          <h1>Mas mahusay na pagsulat sa Filipino</h1>
           <p>
-            I-type o i-paste ang iyong teksto. Tutulungan ka ng Akay na makita ang mga
-            posibleng pagkakamali at maunawaan kung paano ito itatama.
+            Suriin ang iyong teksto at tumanggap ng malinaw na mungkahi para sa
+            mas wastong pagsulat.
           </p>
+          <span className="hero-accent" aria-hidden="true" />
         </section>
 
-        <section className="workspace" aria-label="Writing editor">
-          <div className="editor-card">
-            <div className="card-heading">
-              <div>
-                <h2>Iyong Teksto</h2>
-                <p>Filipino</p>
+        <section className="dashboard-grid">
+          <div className="dashboard-main">
+            <section className="editor-card" aria-label="Writing editor">
+              <div className="editor-toolbar">
+                <div className="heading-with-icon">
+                  <span className="document-icon" aria-hidden="true">▤</span>
+                  <h2>Isulat ang iyong teksto</h2>
+                </div>
+
+                <div className="toolbar-actions">
+                  {analysis && !editing && (
+                    <button className="button button-ghost" onClick={startEditing}>
+                      I-edit
+                    </button>
+                  )}
+                  <button
+                    className="button button-primary"
+                    onClick={runCheck}
+                    disabled={!text.trim()}
+                  >
+                    ✦ Suriin ang Teksto
+                  </button>
+                  <button
+                    className="button button-ghost"
+                    onClick={clearText}
+                    disabled={!text}
+                  >
+                    Linisin
+                  </button>
+                </div>
               </div>
-              <span className="character-count">{text.length} karakter</span>
-            </div>
 
-            <textarea
-              value={text}
-              onChange={(event) => {
-                setText(event.target.value);
-                setAnalysis(null);
-                setIgnored(new Set());
-              }}
-              placeholder="Magsimulang magsulat dito..."
-              spellCheck="false"
-              aria-label="Tekstong susuriin"
-            />
+              <div className="editor-surface">
+                {analysis && !editing ? (
+                  <button
+                    className="review-surface"
+                    onClick={startEditing}
+                    aria-label="I-edit ang sinuring teksto"
+                  >
+                    <HighlightedText text={text} issues={analysis.issues} />
+                  </button>
+                ) : (
+                  <textarea
+                    autoFocus={false}
+                    value={text}
+                    onChange={(event) => updateText(event.target.value)}
+                    placeholder="Magsimulang magsulat dito..."
+                    spellCheck="false"
+                    aria-label="Tekstong susuriin"
+                  />
+                )}
 
-            <div className="editor-footer">
-              <span className="helper">Walang account o cloud storage sa Version 1.</span>
-              <button className="button button-primary" onClick={runCheck} disabled={!text.trim()}>
-                Suriin ang Teksto
-              </button>
-            </div>
+                <span className="character-count">{text.length}/2,000</span>
+              </div>
+            </section>
+
+            <QualityPanel analysis={analysis} />
           </div>
 
-          {analysis && (
-            <aside className="results-card" aria-live="polite">
-              <div className="score-row">
-                <div>
-                  <span className="label">Kalidad ng Pagsulat</span>
-                  <strong className="score">{analysis.score}%</strong>
-                  <span className="level">{analysis.level}</span>
-                </div>
-                <div className="score-ring" style={{ '--score': `${analysis.score * 3.6}deg` }}>
-                  <span>{analysis.score}</span>
-                </div>
-              </div>
+          <div className="dashboard-side">
+            <SuggestionPanel
+              analysis={analysis}
+              onAccept={acceptIssue}
+              onIgnore={ignoreIssue}
+            />
 
-              <div className="counts">
-                <div><span>Baybay</span><strong>{analysis.counts[CATEGORY.SPELLING]}</strong></div>
-                <div><span>Gramatika</span><strong>{analysis.counts[CATEGORY.GRAMMAR]}</strong></div>
-                <div><span>Bantas / Malaking Titik</span><strong>{analysis.counts[CATEGORY.PUNCTUATION]}</strong></div>
-              </div>
-            </aside>
-          )}
+            <a className="test-cta" href="#/test">
+              <span className="test-cta-icon" aria-hidden="true">▤</span>
+              <span>
+                <strong>Subukan ang Test Mode</strong>
+                <small>
+                  Magsanay nang walang mungkahi habang nagsusulat.
+                </small>
+              </span>
+              <span className="test-cta-arrow" aria-hidden="true">›</span>
+            </a>
+          </div>
         </section>
 
-        {analysis && (
-          <section className="analysis-grid">
-            <div className="preview-card">
-              <div className="card-heading">
-                <div>
-                  <h2>Sinuring Teksto</h2>
-                  <p>Naka-highlight ang mga bahaging may mungkahi.</p>
-                </div>
-              </div>
-              <HighlightedText text={text} issues={analysis.issues} />
-            </div>
-
-            <div className="suggestions-card">
-              <div className="card-heading">
-                <div>
-                  <h2>Mga Mungkahi</h2>
-                  <p>{analysis.issues.length} natitirang mungkahi</p>
-                </div>
-              </div>
-
-              {analysis.issues.length === 0 ? (
-                <div className="success-state">
-                  <span>✓</span>
-                  <div>
-                    <strong>Walang nakitang isyu sa saklaw ng Version 1.</strong>
-                    <p>Maaaring mayroon pa ring mga kontekstuwal na tuntuning hindi sakop ng kasalukuyang checker.</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="suggestion-list">
-                  {analysis.issues.map((issue, index) => (
-                    <article className="suggestion" key={`${issue.ruleId}-${issue.start}-${index}`}>
-                      <div className="suggestion-topline">
-                        <span className="rule-tag">{issue.ruleId}</span>
-                        <span>{issue.category}</span>
-                      </div>
-                      <div className="correction">
-                        <span className="wrong">{issue.original || '∅'}</span>
-                        <span aria-hidden="true">→</span>
-                        <strong>{issue.replacement}</strong>
-                      </div>
-                      <p>{issue.explanation}</p>
-                      <div className="suggestion-actions">
-                        <button className="button button-small button-primary" onClick={() => acceptIssue(issue)}>
-                          Tanggapin
-                        </button>
-                        <button className="button button-small button-ghost" onClick={() => ignoreIssue(issue)}>
-                          Huwag Pansinin
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        <section className="scope-note">
-          <strong>Saklaw ng prototype:</strong>
-          <span>
-            Ang unang bersyon ay nakatuon sa mga deterministic na tuntunin. Ang malawakang POS-based na
-            pagsusuri para sa <em>ng/nang</em> at <em>may/mayroon</em> ay nakalaan sa susunod na yugto.
-          </span>
-        </section>
+        <p className="scope-note">
+          Version 1: deterministic na tuntunin muna; hindi pa kasama ang malawakang
+          POS-based na pagsusuri para sa <em>ng/nang</em> at <em>may/mayroon</em>.
+        </p>
       </main>
+
       <Footer />
     </>
   );
@@ -236,17 +374,17 @@ function EditorPage() {
 
 const testItems = [
   {
-    title: 'Aytem 1',
+    title: 'Tanong 1',
     prompt: 'Isulat muli nang wasto ang pangungusap:',
     source: 'bumili ako ng mangga saging at ubas',
   },
   {
-    title: 'Aytem 2',
+    title: 'Tanong 2',
     prompt: 'Isulat muli nang wasto ang pangungusap:',
     source: 'Kumain rin ako',
   },
   {
-    title: 'Aytem 3',
+    title: 'Tanong 3',
     prompt: 'Isulat muli nang wasto ang pangungusap:',
     source: 'nagaaral ako tuwing lunes',
   },
@@ -281,13 +419,19 @@ function TestPage() {
         <main className="page-shell test-shell">
           <section className="completion-card">
             <div className="completion-icon">✓</div>
-            <span className="eyebrow">Test Mode</span>
             <h1>Tapos na ang demo test.</h1>
             <p>
-              Ang mga sagot ay nanatili lamang sa kasalukuyang browser session at hindi ipinadala o
-              isinave sa database.
+              Session-only ang mga sagot sa prototype na ito at hindi iniimbak sa
+              database.
             </p>
-            <button className="button button-primary" onClick={() => { setIndex(0); setAnswers(Array(testItems.length).fill('')); setSubmitted(false); }}>
+            <button
+              className="button button-primary"
+              onClick={() => {
+                setIndex(0);
+                setAnswers(Array(testItems.length).fill(''));
+                setSubmitted(false);
+              }}
+            >
               Subukan Muli
             </button>
           </section>
@@ -300,31 +444,38 @@ function TestPage() {
   return (
     <>
       <Header page="test" />
+
       <main className="page-shell test-shell">
-        <section className="test-intro">
-          <span className="eyebrow">Test Mode</span>
-          <h1>Pagsasanay sa Wastong Pagsulat</h1>
-          <p>Walang mungkahi o awtomatikong pagwawasto habang sumasagot.</p>
+        <section className="test-hero">
+          <h1>Test Mode</h1>
+          <p>Sumagot nang walang mungkahi habang nagsusulat.</p>
+          <span className="hero-accent" aria-hidden="true" />
         </section>
 
         <section className="test-card">
           <div className="test-meta">
-            <span>{item.title} ng {testItems.length}</span>
-            <strong>{progress}%</strong>
+            <strong>{item.title} ng {testItems.length}</strong>
+            <span>{progress}%</span>
           </div>
-          <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
+
+          <div className="progress-track">
+            <span style={{ width: `${progress}%` }} />
+          </div>
 
           <div className="test-question">
-            <p>{item.prompt}</p>
-            <blockquote>{item.source}</blockquote>
+            <h2>Paksa sa Pagsulat</h2>
+            <blockquote>
+              <span>{item.prompt}</span>
+              <strong>{item.source}</strong>
+            </blockquote>
           </div>
 
-          <label htmlFor="test-answer">Iyong Sagot</label>
+          <label htmlFor="test-answer">Isulat ang iyong sagot</label>
           <textarea
             id="test-answer"
             value={answers[index]}
             onChange={(event) => saveAnswer(event.target.value)}
-            placeholder="Isulat ang iyong sagot dito..."
+            placeholder="Isulat dito ang iyong sagot..."
             spellCheck="false"
           />
 
@@ -336,16 +487,21 @@ function TestPage() {
             >
               Nakaraan
             </button>
-            <button className="button button-primary" disabled={!answers[index].trim()} onClick={next}>
+            <button
+              className="button button-primary"
+              disabled={!answers[index].trim()}
+              onClick={next}
+            >
               {index === testItems.length - 1 ? 'Ipasa' : 'Susunod'}
             </button>
           </div>
         </section>
 
         <p className="test-disclaimer">
-          Prototype lamang: walang account, admin scoring, o permanenteng storage sa kasalukuyang bersyon.
+          Walang awtomatikong mungkahi o pagwawasto sa Test Mode.
         </p>
       </main>
+
       <Footer />
     </>
   );
@@ -370,6 +526,10 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  const page = useMemo(() => (hash.startsWith('#/test') ? 'test' : 'editor'), [hash]);
+  const page = useMemo(
+    () => (hash.startsWith('#/test') ? 'test' : 'editor'),
+    [hash],
+  );
+
   return page === 'test' ? <TestPage /> : <EditorPage />;
 }
