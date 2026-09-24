@@ -410,6 +410,13 @@ function EditorPage() {
                   value={text}
                   onChange={(event) => updateText(event.target.value)}
                   onClick={selectIssueAtClick}
+                  onScroll={(event) => {
+                    const layer = event.currentTarget.previousElementSibling;
+                    if (layer) {
+                      layer.scrollTop = event.currentTarget.scrollTop;
+                      layer.scrollLeft = event.currentTarget.scrollLeft;
+                    }
+                  }}
                   placeholder="Magsimulang magsulat dito..."
                   spellCheck="false"
                   aria-label="Tekstong susuriin"
