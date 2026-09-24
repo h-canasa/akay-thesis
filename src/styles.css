@@ -330,8 +330,12 @@ textarea:focus-visible {
 
 .review-surface {
   display: block;
+  min-height: 290px;
   cursor: text;
   font: inherit;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .review-text {
