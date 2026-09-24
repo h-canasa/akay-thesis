@@ -157,7 +157,7 @@ textarea:focus-visible {
 }
 
 .hero {
-  width: min(750px, 64%);
+  width: min(1080px, 86%);
   margin: 0 0 20px 38px;
 }
 
@@ -174,11 +174,15 @@ textarea:focus-visible {
 .hero p,
 .test-hero p,
 .completion-card p {
-  max-width: 690px;
+  max-width: 1040px;
   margin: 7px 0 0;
   color: #4f638b;
   font-size: 0.88rem;
   line-height: 1.5;
+}
+
+.hero p {
+  white-space: nowrap;
 }
 
 .hero-accent {
@@ -1327,6 +1331,10 @@ footer span:first-child {
 }
 
 @media (max-width: 850px) {
+  .hero p {
+    white-space: normal;
+  }
+
   .editor-workspace {
     grid-template-columns: 1fr;
   }
