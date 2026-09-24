@@ -7,15 +7,10 @@ function Logo() {
   return (
     <a className="brand" href="#/" aria-label="Akay home">
       <img
-        className="brand-mark"
-        src={`${import.meta.env.BASE_URL}akay-mark.webp`}
-        alt=""
-        aria-hidden="true"
+        className="brand-logo"
+        src={`${import.meta.env.BASE_URL}akay-logo.png`}
+        alt="Akay — Kaagapay sa Wastong Pagsulat"
       />
-      <span className="brand-copy">
-        <strong>Akay</strong>
-        <small>Kaagapay sa Wastong Pagsulat</small>
-      </span>
     </a>
   );
 }
