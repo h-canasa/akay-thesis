@@ -544,29 +544,16 @@ textarea:focus-visible {
   background: linear-gradient(90deg, #fbfdff, #fff);
 }
 
-.context-drawer {
+.context-inline {
   position: relative;
   z-index: 4;
   width: min(620px, calc(100% - 32px));
-  margin: 0 16px 16px;
+  margin: 12px 16px 0;
   border: 1px solid #dbe5f0;
   border-radius: 14px;
   background: linear-gradient(145deg, #fffafa, #ffffff);
-  box-shadow: 0 12px 28px rgba(27, 56, 102, 0.11);
+  box-shadow: 0 10px 24px rgba(27, 56, 102, 0.10);
   pointer-events: auto;
-}
-
-.context-drawer::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 34px;
-  width: 14px;
-  height: 14px;
-  transform: rotate(45deg);
-  border-left: 1px solid #dbe5f0;
-  border-top: 1px solid #dbe5f0;
-  background: #fffafa;
 }
 
 .context-suggestion-heading {
@@ -1410,9 +1397,9 @@ footer span:first-child {
 }
 
 @media (max-width: 620px) {
-  .context-drawer {
+  .context-inline {
     width: calc(100% - 20px);
-    margin: 0 10px 12px;
+    margin: 10px 10px 0;
   }
 
   .editor-sidebar {
