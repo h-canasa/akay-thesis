@@ -45,7 +45,7 @@ function Header({ page }) {
 }
 
 function HighlightedText({ text, issues }) {
-  if (!text) return <p className="empty-preview">Wala pang tekstong susuriin.</p>;
+  if (!text) return null;
 
   const chunks = [];
   let cursor = 0;
@@ -261,6 +261,7 @@ function EditorPage() {
   const [text, setText] = useState(starterText);
   const [ignored, setIgnored] = useState(new Set());
   const [selectedIssueId, setSelectedIssueId] = useState(null);
+  const [popoverPoint, setPopoverPoint] = useState(null);
 
   const analysis = useMemo(
     () => (text.trim() ? analyzeText(text, ignored) : null),
@@ -275,16 +276,19 @@ function EditorPage() {
     setText(value.slice(0, 2000));
     setIgnored(new Set());
     setSelectedIssueId(null);
+    setPopoverPoint(null);
   };
 
   const clearText = () => {
     setText('');
     setIgnored(new Set());
     setSelectedIssueId(null);
+    setPopoverPoint(null);
   };
 
-  const selectIssueAtCaret = (event) => {
+  const selectIssueAtClick = (event) => {
     if (!analysis) return;
+
     const position = event.currentTarget.selectionStart ?? 0;
     const issue = analysis.issues.find((item) => {
       if (item.start === item.end) {
@@ -293,7 +297,29 @@ function EditorPage() {
       return position >= item.start && position <= item.end;
     });
 
-    setSelectedIssueId(issue ? issueKey(issue) : null);
+    if (!issue) {
+      setSelectedIssueId(null);
+      setPopoverPoint(null);
+      return;
+    }
+
+    const surface = event.currentTarget.parentElement;
+    const rect = surface.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+    const halfWidth = 180;
+    const x = Math.min(
+      Math.max(clickX, halfWidth + 14),
+      Math.max(halfWidth + 14, rect.width - halfWidth - 14),
+    );
+    const estimatedHeight = 220;
+    const y =
+      clickY + estimatedHeight + 34 > rect.height
+        ? Math.max(18, clickY - estimatedHeight - 18)
+        : clickY + 34;
+
+    setSelectedIssueId(issueKey(issue));
+    setPopoverPoint({ x, y });
   };
 
   const acceptIssue = (issue) => {
@@ -302,6 +328,7 @@ function EditorPage() {
     setText(nextText);
     setIgnored(new Set());
     setSelectedIssueId(null);
+    setPopoverPoint(null);
   };
 
   const ignoreIssue = (issue) => {
@@ -309,6 +336,7 @@ function EditorPage() {
     nextIgnored.add(issueKey(issue));
     setIgnored(nextIgnored);
     setSelectedIssueId(null);
+    setPopoverPoint(null);
   };
 
   return (
@@ -358,54 +386,69 @@ function EditorPage() {
                   className="live-editor-input"
                   value={text}
                   onChange={(event) => updateText(event.target.value)}
-                  onClick={selectIssueAtCaret}
-                  onKeyUp={selectIssueAtCaret}
-                  onSelect={selectIssueAtCaret}
+                  onClick={selectIssueAtClick}
                   placeholder="Magsimulang magsulat dito..."
                   spellCheck="false"
                   aria-label="Tekstong susuriin"
                 />
 
                 <span className="character-count">{text.length}/2,000</span>
-              </div>
 
-              {selectedIssue && (
-                <div className="context-suggestion" aria-live="polite">
-                  <div className="context-suggestion-heading">
-                    <div>
-                      <span>Mungkahi · {selectedIssue.category}</span>
-                      <strong>
-                        {selectedIssue.original || '∅'} <b aria-hidden="true">→</b>{' '}
-                        {selectedIssue.replacement}
-                      </strong>
+                {selectedIssue && popoverPoint && (
+                  <div
+                    className="context-suggestion context-popover"
+                    style={{
+                      '--popover-x': `${popoverPoint.x}px`,
+                      '--popover-y': `${popoverPoint.y}px`,
+                    }}
+                    aria-live="polite"
+                  >
+                    <div className="context-suggestion-heading">
+                      <div>
+                        <span>Mungkahi · {selectedIssue.category}</span>
+                        <strong>
+                          {selectedIssue.original || '∅'} <b aria-hidden="true">→</b>{' '}
+                          {selectedIssue.replacement}
+                        </strong>
+                      </div>
+                      <button
+                        className="context-close"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedIssueId(null);
+                          setPopoverPoint(null);
+                        }}
+                        aria-label="Isara ang mungkahi"
+                      >
+                        ×
+                      </button>
                     </div>
-                    <button
-                      className="context-close"
-                      onClick={() => setSelectedIssueId(null)}
-                      aria-label="Isara ang mungkahi"
-                    >
-                      ×
-                    </button>
-                  </div>
 
-                  <p>{selectedIssue.explanation}</p>
+                    <p>{selectedIssue.explanation}</p>
 
-                  <div className="suggestion-actions">
-                    <button
-                      className="button button-small button-primary"
-                      onClick={() => acceptIssue(selectedIssue)}
-                    >
-                      Tanggapin
-                    </button>
-                    <button
-                      className="button button-small button-ghost"
-                      onClick={() => ignoreIssue(selectedIssue)}
-                    >
-                      Huwag Pansinin
-                    </button>
+                    <div className="suggestion-actions">
+                      <button
+                        className="button button-small button-primary"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          acceptIssue(selectedIssue);
+                        }}
+                      >
+                        Tanggapin
+                      </button>
+                      <button
+                        className="button button-small button-ghost"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          ignoreIssue(selectedIssue);
+                        }}
+                      >
+                        Huwag Pansinin
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </section>
 
             <p className="editor-tip">
