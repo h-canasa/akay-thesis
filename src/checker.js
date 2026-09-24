@@ -164,17 +164,28 @@ export function analyzeText(text, ignored = new Set()) {
     });
   }
 
-  const trimmed = text.trimEnd();
-  if (trimmed && !/[.!?]$/.test(trimmed)) {
-    issues.push({
-      ruleId: 'P3',
-      category: CATEGORY.PUNCTUATION,
-      start: trimmed.length,
-      end: trimmed.length,
-      original: '',
-      replacement: '.',
-      explanation: 'Lagyan ng wastong bantas ang dulo ng pangungusap.',
-    });
+  let lineStart = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    if (text[index] !== '\n') continue;
+
+    const line = text.slice(lineStart, index);
+    const trimmedLine = line.trimEnd();
+
+    if (trimmedLine.trim() && !/[.!?]$/.test(trimmedLine)) {
+      const insertionPoint = lineStart + trimmedLine.length;
+      issues.push({
+        ruleId: 'P3',
+        category: CATEGORY.PUNCTUATION,
+        start: insertionPoint,
+        end: insertionPoint,
+        original: '',
+        replacement: '.',
+        explanation:
+          'Lagyan ng wastong bantas ang dulo ng pangungusap bago magsimula ng bagong linya.',
+      });
+    }
+
+    lineStart = index + 1;
   }
 
   const filtered = removeOverlaps(issues).filter((issue) => !ignored.has(issueKey(issue)));
