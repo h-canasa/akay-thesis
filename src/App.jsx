@@ -44,7 +44,7 @@ function Header({ page }) {
   );
 }
 
-function HighlightedText({ text, issues }) {
+function HighlightedText({ text, issues, onIssueClick }) {
   if (!text) return null;
 
   const chunks = [];
@@ -65,6 +65,12 @@ function HighlightedText({ text, issues }) {
           className="issue-marker insertion"
           key={`issue-${index}`}
           title={issue.explanation}
+          onPointerDown={(event) => {
+            if (!onIssueClick) return;
+            event.preventDefault();
+            event.stopPropagation();
+            onIssueClick(issue);
+          }}
         >
           •
         </span>,
@@ -82,6 +88,12 @@ function HighlightedText({ text, issues }) {
           className={`issue-marker ${type}`}
           key={`issue-${index}`}
           title={issue.explanation}
+          onPointerDown={(event) => {
+            if (!onIssueClick) return;
+            event.preventDefault();
+            event.stopPropagation();
+            onIssueClick(issue);
+          }}
         >
           {text.slice(issue.start, issue.end)}
         </mark>,
@@ -312,18 +324,8 @@ function EditorPage() {
     setSelectedIssueId(null);
   };
 
-  const selectIssueAtClick = (event) => {
-    if (!analysis) return;
-
-    const position = event.currentTarget.selectionStart ?? 0;
-    const issue = analysis.issues.find((item) => {
-      if (item.start === item.end) {
-        return Math.abs(position - item.start) <= 1;
-      }
-      return position >= item.start && position <= item.end;
-    });
-
-    setSelectedIssueId(issue ? issueKey(issue) : null);
+  const selectIssue = (issue) => {
+    setSelectedIssueId(issueKey(issue));
   };
 
   const acceptIssue = (issue) => {
@@ -431,7 +433,11 @@ function EditorPage() {
 
               <div className="editor-surface live-editor-surface">
                 <div className="highlight-layer" aria-hidden="true">
-                  <HighlightedText text={text} issues={analysis?.issues ?? []} />
+                  <HighlightedText
+                    text={text}
+                    issues={analysis?.issues ?? []}
+                    onIssueClick={selectIssue}
+                  />
                 </div>
 
                 <textarea
@@ -439,7 +445,7 @@ function EditorPage() {
                   value={text}
                   onChange={(event) => updateText(event.target.value)}
                   onPaste={pasteIntoEditor}
-                  onClick={selectIssueAtClick}
+                  onClick={() => setSelectedIssueId(null)}
                   onScroll={(event) => {
                     const layer = event.currentTarget.previousElementSibling;
                     if (layer) {
