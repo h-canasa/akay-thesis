@@ -43,3 +43,17 @@ test('detects comma-separated list example', () => {
   const issue = result.issues.find((item) => item.ruleId === 'P4');
   assert.equal(issue?.replacement, 'mangga, saging, at ubas');
 });
+
+test('distinguishes diyan and riyan usage', () => {
+  const afterVowel = analyzeText('Pumunta ka diyan.');
+  const riyanIssue = afterVowel.issues.find((item) => item.ruleId === 'G6');
+  assert.equal(riyanIssue?.replacement, 'riyan');
+
+  const afterConsonant = analyzeText('Maghintay riyan.');
+  const diyanIssue = afterConsonant.issues.find((item) => item.ruleId === 'G6');
+  assert.equal(diyanIssue?.replacement, 'diyan');
+
+  const sentenceInitial = analyzeText('Riyan ka muna.');
+  const sentenceInitialIssue = sentenceInitial.issues.find((item) => item.ruleId === 'G6');
+  assert.equal(sentenceInitialIssue?.replacement, 'Diyan');
+});
