@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { analyzeText, CATEGORY, issueKey } from './checker.js';
+import AKAY_LOGO from './logo.js';
 
 const starterText = 'Kumain rin ako ng mangga saging at ubas';
 
 function Logo() {
   return (
     <a className="brand" href="#/" aria-label="Akay home">
-      <img src={`${import.meta.env.BASE_URL}akay-logo.svg`} alt="Akay — Kaagapay sa Wastong Pagsulat" />
+      <img src={AKAY_LOGO} alt="Akay — Kaagapay sa Wastong Pagsulat" />
     </a>
   );
 }
