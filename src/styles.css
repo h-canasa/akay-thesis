@@ -91,31 +91,17 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
-  gap: 10px;
+  width: 190px;
+  height: 64px;
 }
 
-.brand-mark {
-  width: 46px;
-  height: 56px;
+.brand-logo {
+  display: block;
+  width: 184px;
+  height: auto;
+  max-height: 64px;
   object-fit: contain;
-}
-
-.brand-copy {
-  display: grid;
-  gap: 1px;
-  line-height: 1;
-}
-
-.brand-copy strong {
-  color: var(--navy);
-  font-size: 1.55rem;
-  letter-spacing: -0.045em;
-}
-
-.brand-copy small {
-  color: #4c628c;
-  font-size: 0.68rem;
-  white-space: nowrap;
+  object-position: left center;
 }
 
 .nav-actions {
