@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { analyzeText, CATEGORY, issueKey } from './checker.js';
-import AKAY_LOGO from './logo.js';
 
 const starterText = 'Kumain rin ako ng mangga saging at ubas';
 
 function Logo() {
   return (
     <a className="brand" href="#/" aria-label="Akay home">
-      <img src={AKAY_LOGO} alt="Akay — Kaagapay sa Wastong Pagsulat" />
+      <img
+        src={`${import.meta.env.BASE_URL}akay-logo.png`}
+        alt="Akay — Kaagapay sa Wastong Pagsulat"
+      />
     </a>
   );
 }
@@ -15,14 +17,26 @@ function Logo() {
 function Header({ page }) {
   return (
     <header className="site-header">
-      <Logo />
-      <nav className="nav-actions" aria-label="Pangunahing nabigasyon">
-        {page === 'test' ? (
-          <a className="button button-ghost" href="#/">Bumalik sa Editor</a>
-        ) : (
-          <a className="button button-outline" href="#/test">Test Mode</a>
-        )}
-      </nav>
+      <div className="header-inner">
+        <Logo />
+        <nav className="nav-actions" aria-label="Pangunahing nabigasyon">
+          <a className={`nav-link ${page === 'editor' ? 'active' : ''}`} href="#/">
+            Editor
+          </a>
+          <a className={`nav-link ${page === 'test' ? 'active' : ''}`} href="#/test">
+            Test Mode
+          </a>
+        </nav>
+
+        <div className="header-art" aria-hidden="true">
+          <span className="header-sun" />
+          <span className="mountain mountain-back" />
+          <span className="mountain mountain-front" />
+          <span className="flag-wave flag-blue" />
+          <span className="flag-wave flag-yellow" />
+          <span className="flag-wave flag-red" />
+        </div>
+      </div>
     </header>
   );
 }
