@@ -383,6 +383,82 @@ textarea:focus-visible {
   font-weight: 800;
 }
 
+.editor-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 3.25fr) minmax(300px, 0.95fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.editor-main-column {
+  min-width: 0;
+}
+
+.editor-sidebar {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.editor-sidebar .test-cta {
+  min-height: 88px;
+}
+
+.quality-card-compact {
+  overflow: hidden;
+}
+
+.quality-card-compact .quality-heading {
+  min-height: 58px;
+}
+
+.quality-card-compact .quality-content {
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 16px;
+  padding: 18px;
+}
+
+.quality-card-compact .score-ring {
+  width: 102px;
+}
+
+.quality-card-compact .score-ring strong {
+  font-size: 1.45rem;
+}
+
+.quality-card-compact .score-ring span {
+  max-width: 84px;
+  font-size: 0.64rem;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.quality-card-compact .quality-rows {
+  gap: 12px;
+}
+
+.quality-card-compact .quality-row {
+  grid-template-columns: minmax(92px, 1fr) 46px;
+  gap: 8px 10px;
+  align-items: center;
+  font-size: 0.7rem;
+}
+
+.quality-card-compact .quality-row > span {
+  grid-column: 1 / 2;
+  white-space: nowrap;
+}
+
+.quality-card-compact .quality-row > strong {
+  grid-column: 2 / 3;
+  justify-self: end;
+}
+
+.quality-card-compact .quality-line {
+  grid-column: 1 / 3;
+  width: 100%;
+}
+
 /* Live editor interaction */
 .live-editor-layout {
   display: grid;
@@ -1218,6 +1294,18 @@ footer span:first-child {
 }
 
 @media (max-width: 850px) {
+  .editor-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-sidebar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .editor-sidebar .quality-card {
+    grid-column: 1 / -1;
+  }
+
   .tools-grid {
     grid-template-columns: 1fr;
   }
@@ -1283,6 +1371,14 @@ footer span:first-child {
 }
 
 @media (max-width: 620px) {
+  .editor-sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .quality-card-compact .quality-content {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
   .tools-shell {
     width: min(100% - 22px, 1180px);
   }
