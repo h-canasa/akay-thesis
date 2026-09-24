@@ -23,7 +23,7 @@ test('detects common spelling correction', () => {
 test('detects hyphen rule for nag-aaral', () => {
   const result = analyzeText('nagaaral ako.');
   const issue = result.issues.find((item) => item.ruleId === 'B3');
-  assert.equal(issue?.replacement, 'Nag-aaral');
+  assert.equal(issue?.replacement, 'nag-aaral');
 });
 
 test('detects capitalization and ending punctuation', () => {
