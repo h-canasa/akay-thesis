@@ -26,7 +26,7 @@ function Header({ page }) {
             Home
           </a>
           <a className={`nav-link ${page === 'tools' ? 'active' : ''}`} href="#/tools">
-            Mga Tool
+            Mga Instrumento
           </a>
           <a className={`nav-link ${page === 'test' ? 'active' : ''}`} href="#/test">
             Test Mode
@@ -463,7 +463,7 @@ function EditorPage() {
             <a className="test-cta" href="#/tools">
               <span className="test-cta-icon" aria-hidden="true">✦</span>
               <span>
-                <strong>Mga Tool sa Pagsulat</strong>
+                <strong>Mga Instrumento sa Pagsulat</strong>
                 <small>Rewrite / Tone Assistant at English–Filipino Helper.</small>
               </span>
               <span className="test-cta-arrow" aria-hidden="true">›</span>
@@ -569,7 +569,7 @@ function ToolsPage() {
 
       <main className="page-shell tools-shell">
         <section className="tools-hero">
-          <h1>Mga Tool sa Pagsulat</h1>
+          <h1>Mga Instrumento sa Pagsulat</h1>
           <p>Mga simpleng pantulong para sa tono, salin, at paggamit ng salita.</p>
           <span className="hero-accent" aria-hidden="true" />
         </section>
