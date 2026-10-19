@@ -28,6 +28,9 @@ function Header({ page }) {
           <a className={`nav-link ${page === 'tools' ? 'active' : ''}`} href="#/tools">
             Mga Instrumento
           </a>
+          <a className={`nav-link ${page === 'exam' ? 'active' : ''}`} href="#/exam">
+            Essay Exam
+          </a>
           <a className={`nav-link ${page === 'test' ? 'active' : ''}`} href="#/test">
             Test Mode
           </a>
@@ -110,7 +113,7 @@ function HighlightedText({ text, issues, onIssueClick }) {
   return <p className="review-text">{chunks}</p>;
 }
 
-function SuggestionPanel({ analysis, onAccept, onIgnore }) {
+function SuggestionPanel({ analysis, onAccept, onIgnore, readOnly = false }) {
   const issues = analysis?.issues ?? [];
 
   return (
@@ -155,20 +158,22 @@ function SuggestionPanel({ analysis, onAccept, onIgnore }) {
 
               <p>{issue.explanation}</p>
 
-              <div className="suggestion-actions">
-                <button
-                  className="button button-small button-primary"
-                  onClick={() => onAccept(issue)}
-                >
-                  Tanggapin
-                </button>
-                <button
-                  className="button button-small button-ghost"
-                  onClick={() => onIgnore(issue)}
-                >
-                  Huwag Pansinin
-                </button>
-              </div>
+              {!readOnly && (
+                <div className="suggestion-actions">
+                  <button
+                    className="button button-small button-primary"
+                    onClick={() => onAccept(issue)}
+                  >
+                    Tanggapin
+                  </button>
+                  <button
+                    className="button button-small button-ghost"
+                    onClick={() => onIgnore(issue)}
+                  >
+                    Huwag Pansinin
+                  </button>
+                </div>
+              )}
             </article>
           ))}
         </div>
@@ -189,17 +194,17 @@ function QualityPanel({ analysis, compact = false }) {
     {
       label: 'Baybay',
       type: 'spelling',
-      value: analysis ? Math.max(0, 100 - counts[CATEGORY.SPELLING] * 12) : 0,
+      value: analysis?.categoryScores[CATEGORY.SPELLING] ?? 0,
     },
     {
       label: 'Gramatika',
       type: 'grammar',
-      value: analysis ? Math.max(0, 100 - counts[CATEGORY.GRAMMAR] * 12) : 0,
+      value: analysis?.categoryScores[CATEGORY.GRAMMAR] ?? 0,
     },
     {
       label: 'Bantas at Malaking Titik',
       type: 'punctuation',
-      value: analysis ? Math.max(0, 100 - counts[CATEGORY.PUNCTUATION] * 12) : 0,
+      value: analysis?.categoryScores[CATEGORY.PUNCTUATION] ?? 0,
     },
   ];
 
@@ -519,6 +524,15 @@ function EditorPage() {
               <span className="test-cta-arrow" aria-hidden="true">›</span>
             </a>
 
+            <a className="test-cta" href="#/exam">
+              <span className="test-cta-icon" aria-hidden="true">✎</span>
+              <span>
+                <strong>Essay Exam Mode</strong>
+                <small>Sumulat nang walang live na marka o mungkahi. Tingnan ang resulta pagkatapos ng Ipasa.</small>
+              </span>
+              <span className="test-cta-arrow" aria-hidden="true">›</span>
+            </a>
+
             <a className="test-cta" href="#/test">
               <span className="test-cta-icon" aria-hidden="true">▤</span>
               <span>
@@ -716,6 +730,112 @@ const testItems = [
   },
 ];
 
+
+// Essay Exam is a separate, unassisted writing session. There is deliberately
+// no analyzeText call until the student submits. Results are immutable snapshots
+// for the current session, so reviewing corrections cannot change the grade.
+const MAX_ESSAY_LENGTH = 10000;
+
+function EssayExamPage() {
+  const [draft, setDraft] = useState('');
+  const [submission, setSubmission] = useState(null);
+  const resultHeadingRef = useRef(null);
+
+  useEffect(() => {
+    if (submission) resultHeadingRef.current?.focus();
+  }, [submission]);
+
+  const submitEssay = (event) => {
+    event.preventDefault();
+    const essay = normalizeEditorText(draft).slice(0, MAX_ESSAY_LENGTH);
+    if (!essay.trim() || submission) return;
+    setSubmission({ essay, analysis: analyzeText(essay) });
+  };
+
+  const startNewEssay = () => {
+    setDraft('');
+    setSubmission(null);
+  };
+
+  return (
+    <>
+      <Header page="exam" />
+      <main className="page-shell test-shell exam-shell">
+        <section className="test-hero">
+          <h1>{submission ? 'Resulta ng Essay Exam' : 'Essay Exam Mode'}</h1>
+          <p>
+            {submission
+              ? 'Narito ang marka at mga mungkahi para sa iyong ipinasa na sanaysay.'
+              : 'Sumulat ng sanaysay sa Filipino. Walang markang, highlight, o mungkahing ipapakita habang nagsusulat.'}
+          </p>
+          <span className="hero-accent" aria-hidden="true" />
+        </section>
+
+        {!submission ? (
+          <form className="test-card exam-card" onSubmit={submitEssay}>
+            <div className="test-question">
+              <h2>Panuto</h2>
+              <blockquote>
+                <strong>Sumulat ng isang sanaysay sa Filipino.</strong>
+                <span>Maaari kang pumili ng sariling paksa o sundin ang paksang ibinigay ng iyong guro.</span>
+              </blockquote>
+            </div>
+
+            <label htmlFor="exam-essay">Iyong sanaysay</label>
+            <textarea
+              id="exam-essay"
+              className="exam-textarea"
+              value={draft}
+              onChange={(event) => setDraft(normalizeEditorText(event.target.value).slice(0, MAX_ESSAY_LENGTH))}
+              maxLength={MAX_ESSAY_LENGTH}
+              rows={14}
+              placeholder="Isulat dito ang iyong sanaysay..."
+              spellCheck={false}
+              required
+            />
+
+            <div className="exam-actions">
+              <span className="exam-character-count">{draft.length.toLocaleString('en-US')} / {MAX_ESSAY_LENGTH.toLocaleString('en-US')} karakter</span>
+              <button className="button button-primary" type="submit" disabled={!draft.trim()}>
+                Ipasa ang Sanaysay
+              </button>
+            </div>
+            <p className="exam-session-note">
+              Lalabas lamang ang marka at mga mungkahi pagkatapos mong ipasa ang sanaysay.
+              Sa kasalukuyang bersiyon, hindi sine-save ang iyong sagot pagkatapos isara o i-refresh ang pahina.
+            </p>
+          </form>
+        ) : (
+          <div className="exam-results" aria-live="polite">
+            <h2 ref={resultHeadingRef} tabIndex={-1} className="exam-result-heading">Iyong Resulta</h2>
+            <QualityPanel analysis={submission.analysis} />
+            <p className="exam-weight-note">
+              Timbang ng marka: Gramatika 1.5 · Baybay 1.0 · Bantas at Malaking Titik 0.5.
+              Ang kabuuang marka ay ang weighted average ng tatlong kategorya.
+            </p>
+            <section className="test-card exam-review-card" aria-label="Ipinasa na sanaysay">
+              <h2>Sinuring Sanaysay</h2>
+              <p className="exam-review-note">
+                Naka-highlight na ngayon ang mga natukoy na isyu. Ang orihinal mong sagot at marka ay hindi na mababago.
+              </p>
+              <div className="exam-reviewed-essay">
+                <HighlightedText text={submission.essay} issues={submission.analysis.issues} />
+              </div>
+            </section>
+            <SuggestionPanel analysis={submission.analysis} readOnly />
+            <div className="exam-actions exam-restart">
+              <button className="button button-primary" type="button" onClick={startNewEssay}>
+                Sumulat ng Panibagong Sanaysay
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+      <Footer />
+    </>
+  );
+}
+
 function TestPage() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState(Array(testItems.length).fill(''));
@@ -854,11 +974,13 @@ export default function App() {
   }, []);
 
   const page = useMemo(() => {
+    if (hash.startsWith('#/exam')) return 'exam';
     if (hash.startsWith('#/test')) return 'test';
     if (hash.startsWith('#/tools')) return 'tools';
     return 'editor';
   }, [hash]);
 
+  if (page === 'exam') return <EssayExamPage />;
   if (page === 'test') return <TestPage />;
   if (page === 'tools') return <ToolsPage />;
   return <EditorPage />;
