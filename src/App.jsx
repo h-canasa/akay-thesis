@@ -831,8 +831,8 @@ function TestPage() {
   const resultHeadingRef = useRef(null);
 
   const item = practice.questions[index];
-  const answeredCount = practice.questions.filter((question) => answers[question.id]?.trim()).length;
   const progress = Math.round(((index + 1) / QUESTIONS_PER_PRACTICE) * 100);
+  const currentAnswer = answers[item.id] ?? '';
   const review = useMemo(
     () => (submitted ? gradePracticeSession(practice.questions, answers) : null),
     [submitted, practice, answers],
@@ -847,6 +847,7 @@ function TestPage() {
   };
 
   const next = () => {
+    if (!currentAnswer.trim() || submitted) return;
     if (index < QUESTIONS_PER_PRACTICE - 1) {
       setIndex((previous) => previous + 1);
     } else {
@@ -878,7 +879,7 @@ function TestPage() {
             <div className="practice-score-number">{review.correctCount}<span> / {review.total}</span></div>
             <strong>{review.percent}% · {review.correctCount} tamang sagot</strong>
             <p>
-              Ang marka rito ay batay sa tamang sagot sa limang tanong, hindi sa weighted essay score.
+              Ang marka ay batay sa bilang ng tamang sagot sa limang tanong.
             </p>
           </section>
 
@@ -888,7 +889,7 @@ function TestPage() {
               <span>{review.total - review.correctCount} kailangang balikan</span>
             </div>
 
-            {review.items.map(({ question, answer, correct }, questionIndex) => (
+            {review.items.map(({ question, answer, correct, differences, comparisonReference, comparisonTruncated }, questionIndex) => (
               <details
                 className={`practice-review-item ${correct ? 'practice-review-correct' : 'practice-review-incorrect'}`}
                 key={question.id}
@@ -921,8 +922,51 @@ function TestPage() {
                       <p>{question.accepted.join(' / ')}</p>
                     </div>
                   )}
+                  {!correct && differences.length > 0 && (
+                    <section className="practice-answer-diff" aria-label="Mga pagkakaiba sa answer key">
+                      <strong>Mga pagkakaiba sa tinatanggap na sagot</strong>
+                      <p>
+                        Ipinapakita ang mga salitang o bantas na hindi tumugma sa answer key,
+                        kabilang ang mga karagdagang pagbabago sa iyong sagot.
+                      </p>
+                      {comparisonReference !== question.correct && (
+                        <p className="practice-diff-reference">
+                          Inihambing sa tinatanggap ding sagot: {comparisonReference}
+                        </p>
+                      )}
+                      <ul>
+                        {differences.map((difference, differenceIndex) => (
+                          <li key={differenceIndex}>
+                            {difference.kind === 'changed' ? (
+                              <>
+                                <span className="practice-diff-wrong">{difference.actual}</span>
+                                <span aria-hidden="true">→</span>
+                                <strong>{difference.expected}</strong>
+                              </>
+                            ) : difference.kind === 'extra' ? (
+                              <>
+                                <span className="practice-diff-wrong">{difference.actual}</span>
+                                <span>— dagdag sa iyong sagot</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>Kulang:</span>
+                                <strong>{difference.expected}</strong>
+                              </>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                  {comparisonTruncated && (
+                    <p className="practice-diff-limited">
+                      Masyadong mahaba ang sagot para maipakita ang mga pagkakaiba.
+                      Ihambing ito sa tamang pangungusap sa itaas.
+                    </p>
+                  )}
                   <p className="practice-review-explanation">
-                    <strong>Paliwanag: </strong>{question.explanation}
+                    <strong>Paliwanag sa orihinal na isyu: </strong>{question.explanation}
                   </p>
                 </div>
               </details>
@@ -959,7 +1003,7 @@ function TestPage() {
         <section className="test-card practice-card">
           <div className="test-meta">
             <strong>Tanong {index + 1} ng {QUESTIONS_PER_PRACTICE}</strong>
-            <span>{answeredCount} / {QUESTIONS_PER_PRACTICE} nasagutan</span>
+            <span>Hakbang {index + 1} ng {QUESTIONS_PER_PRACTICE}</span>
           </div>
 
           <div className="progress-track" aria-label={`Tanong ${index + 1} ng ${QUESTIONS_PER_PRACTICE}`}>
@@ -977,26 +1021,26 @@ function TestPage() {
           <textarea
             id="test-answer"
             key={item.id}
-            value={answers[item.id] ?? ''}
+            value={currentAnswer}
             onChange={(event) => saveAnswer(event.target.value)}
             placeholder="Isulat ang buong tamang pangungusap..."
             spellCheck={false}
+            maxLength={500}
             rows={4}
+            required
           />
 
           <div className="test-actions">
+            <span className="practice-step-hint">Sagutin ang tanong bago magpatuloy. Hindi na maaaring bumalik.</span>
             <button
               type="button"
-              className="button button-ghost"
-              disabled={index === 0}
-              onClick={() => setIndex((previous) => previous - 1)}
+              className="button button-primary"
+              disabled={!currentAnswer.trim()}
+              onClick={next}
             >
-              Nakaraan
-            </button>
-            <button type="button" className="button button-primary" onClick={next}>
               {index === QUESTIONS_PER_PRACTICE - 1
                 ? 'Ipasa ang mga Sagot'
-                : answers[item.id]?.trim() ? 'Susunod' : 'Laktawan'}
+                : 'Susunod'}
             </button>
           </div>
         </section>
