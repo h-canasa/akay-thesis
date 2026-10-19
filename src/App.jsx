@@ -950,7 +950,7 @@ function TestPage() {
         <section className="test-hero">
           <h1>Mock Test Mode</h1>
           <p>
-            Limang random na tanong mula sa {APPROVED_PRACTICE_QUESTIONS.length} na sinuring
+            Limang random na tanong mula sa {APPROVED_PRACTICE_QUESTIONS.length} aktibong
             practice questions. Walang mungkahi o marka hanggang sa huling Ipasa.
           </p>
           <span className="hero-accent" aria-hidden="true" />
