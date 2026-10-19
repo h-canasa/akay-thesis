@@ -1320,6 +1320,35 @@ footer span:first-child {
   font-weight: 700;
 }
 
+/* Dictionary-only findings are advisories, not grade deductions. */
+.issue-marker.advisory {
+  background: #f4f0ff;
+  text-decoration: underline dotted #7654b5 1.7px;
+  text-underline-offset: 3px;
+}
+
+.context-suggestion-heading .context-no-correction {
+  color: #65738e;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.context-suggestion .context-advisory-note,
+.quality-advisory-note,
+.exam-advisory-note {
+  color: #6649a0;
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.quality-advisory-note {
+  margin: 0 18px 14px;
+}
+
+.exam-advisory-note {
+  margin: 0 0 14px;
+}
+
 /* Unassisted essay exam and post-submission review */
 .exam-card .test-question {
   margin-bottom: 8px;
