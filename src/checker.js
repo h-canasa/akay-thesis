@@ -1,3 +1,5 @@
+import { findDictionaryAdvisories } from './dictionary/checkWords.js';
+
 export function normalizeEditorText(value = '') {
   return String(value)
     .replace(/\r\n?/g, '\n')
@@ -275,7 +277,19 @@ export function analyzeText(text, ignored = new Set()) {
     lineStart = index + 1;
   }
 
-  const filtered = removeOverlaps(issues).filter((issue) => !ignored.has(issueKey(issue)));
+  // Preserve existing high-confidence rules, and add dictionary-only suggestions
+  // when they do not cover an existing rule's highlight. A dictionary miss
+  // alone is not evidence of a spelling mistake and must not lower grades.
+  const ruleIssues = removeOverlaps(issues);
+  const dictionaryIssues = findDictionaryAdvisories(text).filter(
+    (candidate) => !ruleIssues.some(
+      (rule) => candidate.start < rule.end && candidate.end > rule.start,
+    ),
+  );
+  const filtered = [...ruleIssues, ...dictionaryIssues]
+    .filter((issue) => !ignored.has(issueKey(issue)))
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+  const advisoryCount = filtered.filter((issue) => issue.advisory).length;
   const counts = {
     [CATEGORY.SPELLING]: 0,
     [CATEGORY.GRAMMAR]: 0,
@@ -283,7 +297,7 @@ export function analyzeText(text, ignored = new Set()) {
   };
 
   filtered.forEach((issue) => {
-    counts[issue.category] += 1;
+    if (!issue.advisory) counts[issue.category] += 1;
   });
 
   const categoryScores = Object.fromEntries(
@@ -304,7 +318,7 @@ export function analyzeText(text, ignored = new Set()) {
   const score = Math.round(weightedSum / totalWeight);
   const level = score >= 90 ? 'Mahusay' : score >= 75 ? 'Katamtaman' : 'Nangangailangan ng Pagsasanay';
 
-  return { issues: filtered, counts, categoryScores, score, level };
+  return { issues: filtered, counts, advisoryCount, categoryScores, score, level };
 }
 
 export { CATEGORY, issueKey };

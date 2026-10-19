@@ -10,6 +10,7 @@ Akay is a thesis prototype for a Filipino writing checker and practice web app. 
 
 - Homepage with the writing editor
 - Rule-based Filipino spelling, punctuation/capitalization, and selected grammar checks
+- Offline Filipino word-list checks for uncertain spelling and likely joined words (advisory-only; no score penalty)
 - Suggested correction + short Filipino explanation
 - Accept / ignore actions
 - Writing score and error counts
@@ -52,3 +53,9 @@ Overall = round((1.0 × Baybay + 1.5 × Gramatika + 0.5 × Bantas) / 3.0)
 The label thresholds remain Mahusay (90–100), Katamtaman (75–89), and Nangangailangan ng Pagsasanay (0–74). The score measures only mistakes covered by the current rule-based checker; it does not evaluate essay organization, reasoning, or content quality. Overlapping issues are still deduplicated by the existing checker, and dismissed suggestions still affect the live editor's issue count.
 
 Essay Exam responses and results are in-memory only: they are **not** saved across refreshes or navigation and are not collected in a researcher dashboard. For pre-test/post-test research, students/researchers must record results separately until persistence is implemented.
+
+## Hybrid dictionary checker (prototype)
+
+Akay bundles a cleaned, MIT-licensed Filipino word list and marks unfamiliar words as possible spelling issues. It can suggest separating words such as `isangsirena → isang sirena` and removing an extra letter such as `magandaa → maganda`. These are **uncertain dictionary advisories**, distinguished visually from rule-based mistakes and **excluded from category scores**. Users can click a highlighted word to inspect one suggestion at a time. Exam Mode still shows no feedback before submission.
+
+For the methodology, limitations, licensing, and algorithm, see [Dictionary checking documentation](docs/dictionary-checking.md).
