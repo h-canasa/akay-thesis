@@ -20,7 +20,11 @@ Akay is a thesis prototype for a Filipino writing checker and practice web app. 
 - Separate randomized Mock Test Mode: 5 balanced questions from a 60-question active bank, with answer-key grading and explanations after submission
 - GitHub Pages deployment
 
-The first implementation intentionally prioritizes deterministic rules that can be demonstrated reliably. POS-dependent rules such as broad **ng/nang** and **may/mayroon** analysis are deferred until a later NLP/POS-capable iteration.
+The implementation prioritizes deterministic rules that can be demonstrated reliably. POS-dependent rules such as broad **ng/nang** and **may/mayroon** analysis remain outside the present checker scope.
+
+## Deliberate limitations
+
+The students have designated **tone/style rewriting** and the standalone **English–Filipino vocabulary/translation helper** as out-of-scope for this thesis version. The former **Mga Instrumento** page (and all links to it) has been removed rather than presenting incomplete helpers as functional capabilities. Akay focuses on the live Filipino writing checker, submission-only Essay Exam, and randomized Mock Test. This is a scope decision, not a claim that tone or vocabulary support is unnecessary for language learning.
 
 ## Local development
 
