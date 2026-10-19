@@ -1320,6 +1320,116 @@ footer span:first-child {
   font-weight: 700;
 }
 
+/* Unassisted essay exam and post-submission review */
+.exam-card .test-question {
+  margin-bottom: 8px;
+}
+
+.exam-card .exam-textarea {
+  min-height: 350px;
+  font-size: 1rem;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.exam-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.exam-character-count,
+.exam-session-note,
+.exam-weight-note,
+.exam-review-note {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.exam-session-note {
+  margin: 16px 0 0;
+}
+
+.exam-results {
+  display: grid;
+  gap: 18px;
+}
+
+.exam-result-heading,
+.exam-review-card h2 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 1.2rem;
+}
+
+.exam-result-heading:focus {
+  outline: none;
+}
+
+.exam-review-card h2 {
+  margin-bottom: 7px;
+}
+
+.exam-review-note {
+  margin: 0 0 14px;
+}
+
+.exam-weight-note {
+  margin: -10px 4px 0;
+}
+
+.exam-reviewed-essay {
+  min-height: 160px;
+  max-height: 540px;
+  padding: 24px;
+  overflow-y: auto;
+  border: 1px solid #dce8f5;
+  border-radius: 12px;
+  background: #fbfdff;
+}
+
+.exam-reviewed-essay .review-text {
+  margin: 0;
+  color: #19335f;
+  font-size: 1rem;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.exam-results .suggestions-card {
+  min-height: 0;
+}
+
+.exam-restart {
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+@media (max-width: 620px) {
+  .exam-card,
+  .exam-review-card {
+    padding: 16px;
+  }
+
+  .exam-card .exam-textarea {
+    min-height: 310px;
+  }
+
+  .exam-actions .button {
+    width: 100%;
+  }
+
+  .exam-reviewed-essay {
+    padding: 16px;
+  }
+}
+
 /* Responsive */
 @media (max-width: 1080px) {
   .header-art-image {
