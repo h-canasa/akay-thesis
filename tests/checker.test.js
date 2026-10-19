@@ -86,3 +86,39 @@ test('normalizes pasted text and still detects issues', () => {
   assert.ok(result.issues.some((item) => item.ruleId === 'G1'));
   assert.ok(result.issues.some((item) => item.ruleId === 'G2'));
 });
+
+test('computes the weighted average of the three category scores', () => {
+  const result = analyzeText('Nuon, kumain rin ako noong lunes at biyernes.');
+  assert.equal(result.counts.Baybay, 1);
+  assert.equal(result.counts.Gramatika, 1);
+  assert.equal(result.counts['Bantas at Malaking Titik'], 2);
+
+  assert.equal(result.categoryScores.Baybay, 88);
+  assert.equal(result.categoryScores.Gramatika, 88);
+  assert.equal(result.categoryScores['Bantas at Malaking Titik'], 76);
+  // (88 * 1.0 + 88 * 1.5 + 76 * 0.5) / 3 = 86
+  assert.equal(result.score, 86);
+  assert.equal(result.level, 'Katamtaman');
+});
+
+test('gives a clean essay 100 in all categories', () => {
+  const result = analyzeText('Maayos ang pangungusap.');
+  assert.equal(result.score, 100);
+  assert.deepEqual(Object.values(result.categoryScores), [100, 100, 100]);
+  assert.equal(result.level, 'Mahusay');
+});
+
+test('does not score overlapping rule matches twice', () => {
+  const result = analyzeText('mangga saging at ubas');
+  // P4 is longer than the overlapping P1 match.
+  assert.equal(result.issues.filter((item) => item.ruleId === 'P4').length, 1);
+  assert.equal(result.issues.filter((item) => item.ruleId === 'P1').length, 0);
+  assert.equal(result.counts['Bantas at Malaking Titik'], 1);
+  assert.equal(result.categoryScores['Bantas at Malaking Titik'], 88);
+});
+
+test('category deductions cannot go below zero', () => {
+  const result = analyzeText(Array(10).fill('Nuon').join(' '));
+  assert.equal(result.categoryScores.Baybay, 0);
+  assert.ok(result.score >= 0 && result.score <= 100);
+});
