@@ -92,8 +92,9 @@ function HighlightedText({ text, issues, onIssueClick, keyboardAccessible = fals
         </span>,
       );
     } else {
-      const type =
-        issue.category === CATEGORY.GRAMMAR
+      const type = issue.advisory
+        ? 'advisory'
+        : issue.category === CATEGORY.GRAMMAR
           ? 'grammar'
           : issue.category === CATEGORY.SPELLING
             ? 'spelling'
@@ -106,7 +107,9 @@ function HighlightedText({ text, issues, onIssueClick, keyboardAccessible = fals
           title={issue.explanation}
           role={keyboardAccessible && onIssueClick ? 'button' : undefined}
           tabIndex={keyboardAccessible && onIssueClick ? 0 : undefined}
-          aria-label={keyboardAccessible && onIssueClick ? `Mungkahi: ${issue.original} patungong ${issue.replacement}` : undefined}
+          aria-label={keyboardAccessible && onIssueClick ? (issue.replacement
+            ? `Mungkahi: ${issue.original} patungong ${issue.replacement}`
+            : `Posibleng isyu sa baybay: ${issue.original}`) : undefined}
           onKeyDown={(event) => handleIssueKeyDown(event, issue)}
           onPointerDown={(event) => {
             if (!onIssueClick) return;
@@ -137,10 +140,14 @@ function ContextSuggestion({ issue, onClose, onAccept, onIgnore }) {
     <div className="context-suggestion context-inline" aria-live="polite">
       <div className="context-suggestion-heading">
         <div>
-          <span>Mungkahi · {issue.category}</span>
+          <span>Mungkahi · {issue.category}{issue.advisory ? ' · Para sa pagsusuri' : ''}</span>
           <strong>
-            {issue.original || '∅'} <b aria-hidden="true">→</b>{' '}
-            {issue.replacement}
+            {issue.original || '∅'}
+            {issue.replacement ? (
+              <> <b aria-hidden="true">→</b> {issue.replacement}</>
+            ) : (
+              <span className="context-no-correction"> · Walang tiyak na pagwawasto</span>
+            )}
           </strong>
         </div>
         <button
@@ -157,29 +164,38 @@ function ContextSuggestion({ issue, onClose, onAccept, onIgnore }) {
       </div>
 
       <p>{issue.explanation}</p>
+      {issue.advisory && (
+        <p className="context-advisory-note">
+          Posibleng isyu lamang ito. Hindi ito ibinabawas sa marka.
+        </p>
+      )}
 
-      {onAccept && onIgnore && (
+      {(onAccept || onIgnore) && (
         <div className="suggestion-actions">
-          <button
-            type="button"
-            className="button button-small button-primary"
-            onClick={(event) => {
-              event.stopPropagation();
-              onAccept(issue);
-            }}
-          >
-            Tanggapin
-          </button>
-          <button
-            type="button"
-            className="button button-small button-ghost"
-            onClick={(event) => {
-              event.stopPropagation();
-              onIgnore(issue);
-            }}
-          >
-            Huwag Pansinin
-          </button>
+          {onAccept && issue.replacement && (
+            <button
+              type="button"
+              className="button button-small button-primary"
+              onClick={(event) => {
+                event.stopPropagation();
+                onAccept(issue);
+              }}
+            >
+              Tanggapin
+            </button>
+          )}
+          {onIgnore && (
+            <button
+              type="button"
+              className="button button-small button-ghost"
+              onClick={(event) => {
+                event.stopPropagation();
+                onIgnore(issue);
+              }}
+            >
+              Huwag Pansinin
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -274,6 +290,11 @@ function QualityPanel({ analysis, compact = false }) {
           ))}
         </div>
       </div>
+      {analysis?.advisoryCount > 0 && (
+        <p className="quality-advisory-note">
+          {analysis.advisoryCount} posibleng isyu sa talasalitaan · hindi kasama sa marka.
+        </p>
+      )}
     </section>
   );
 }
@@ -787,6 +808,11 @@ function EssayExamPage() {
                   ? 'Pindutin ang naka-highlight na bahagi upang makita ang mungkahi. Hindi na mababago ang ipinasa mong sanaysay at marka.'
                   : 'Walang nakitang isyu sa kasalukuyang saklaw ng Akay checker. Hindi na mababago ang ipinasa mong sanaysay at marka.'}
               </p>
+              {submission.analysis.advisoryCount > 0 && (
+                <p className="exam-advisory-note">
+                  {submission.analysis.advisoryCount} posibleng isyu sa talasalitaan ang hindi isinama sa marka.
+                </p>
+              )}
               <ContextSuggestion
                 issue={selectedIssue}
                 onClose={() => setSelectedIssueId(null)}
