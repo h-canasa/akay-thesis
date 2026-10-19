@@ -47,7 +47,7 @@ const data = [
   ['MX32', G, 'Maganda daw ang pelikula kagabi.', 'Maganda raw ang pelikula kagabi.', 'Karaniwang “raw” ang ginagamit pagkatapos ng patinig.'],
   ['MX33', G, 'Uuwi daw si Rosa sa probinsya bukas.', 'Uuwi raw si Rosa sa probinsya bukas.', 'Karaniwang “raw” ang ginagamit pagkatapos ng patinig.'],
   ['MX34', G, 'Si Ana at Ben ang nagluto ng hapunan.', 'Sina Ana at Ben ang nagluto ng hapunan.', 'Gamitin ang “sina” kapag dalawa o higit pang tao ang tinutukoy.'],
-  ['MX35', G, 'Si Maria, Juan, at Pedro ang sumali sa laro.', 'Sina Maria, Juan, at Pedro ang sumali sa laro.', 'Gamitin ang “sina” kapag maraming pangalan ang kasama.'],
+  ['MX35', G, 'Si Maria, Juan, at Pedro ang sumali sa laro.', 'Sina Maria, Juan, at Pedro ang sumali sa laro.', 'Gamitin ang “sina” kapag maraming pangalan ang kasama.', { accepted: ['Sina Maria, Juan at Pedro ang sumali sa laro.'] }],
   ['MX36', G, 'Bumisita si Lola at Lolo sa amin kahapon.', 'Bumisita sina Lola at Lolo sa amin kahapon.', 'Gamitin ang “sina” kapag dalawa ang tinutukoy na tao.'],
   ['MX37', G, 'Kasama ni Ana at Rosa sa pagsasanay.', 'Kasama nina Ana at Rosa sa pagsasanay.', 'Gamitin ang “nina” kapag higit sa isang pangalan ang kasunod ng “ni”.'],
   ['MX38', P, 'bumili ako ng gulay sa palengke.', 'Bumili ako ng gulay sa palengke.', 'Gumamit ng malaking titik sa simula ng pangungusap.'],
