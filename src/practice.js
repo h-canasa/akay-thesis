@@ -88,16 +88,88 @@ export function normalizePracticeAnswer(value) {
     .trim();
 }
 
+
+// This is an answer-key comparison, not a grammar diagnosis. Align word and
+// punctuation tokens so a student can see *all* changes from an accepted
+// answer, including unrelated words changed accidentally.
+const COMPARE_TOKEN_PATTERN = /[\p{L}\p{M}\p{N}]+(?:[-'][\p{L}\p{M}\p{N}]+)*|[^\s]/gu;
+const MAX_COMPARE_TOKENS = 120;
+
+export function comparePracticeAnswer(answer, reference) {
+  const actual = normalizePracticeAnswer(answer).match(COMPARE_TOKEN_PATTERN) ?? [];
+  const expected = normalizePracticeAnswer(reference).match(COMPARE_TOKEN_PATTERN) ?? [];
+  if (actual.length > MAX_COMPARE_TOKENS || expected.length > MAX_COMPARE_TOKENS) {
+    return { distance: Number.POSITIVE_INFINITY, changes: [], truncated: true };
+  }
+
+  const rows = actual.length;
+  const cols = expected.length;
+  const distances = Array.from({ length: rows + 1 }, () => Array(cols + 1).fill(0));
+
+  for (let i = rows; i >= 0; i -= 1) distances[i][cols] = rows - i;
+  for (let j = cols; j >= 0; j -= 1) distances[rows][j] = cols - j;
+
+  for (let i = rows - 1; i >= 0; i -= 1) {
+    for (let j = cols - 1; j >= 0; j -= 1) {
+      distances[i][j] = actual[i] === expected[j]
+        ? distances[i + 1][j + 1]
+        : 1 + Math.min(
+          distances[i + 1][j + 1], // replacement
+          distances[i + 1][j],     // extra token
+          distances[i][j + 1],     // missing token
+        );
+    }
+  }
+
+  const changes = [];
+  let i = 0;
+  let j = 0;
+  while (i < rows || j < cols) {
+    if (i < rows && j < cols && actual[i] === expected[j]) {
+      i += 1;
+      j += 1;
+    } else if (
+      i < rows && j < cols
+      && distances[i][j] === 1 + distances[i + 1][j + 1]
+    ) {
+      changes.push({ kind: 'changed', actual: actual[i], expected: expected[j] });
+      i += 1;
+      j += 1;
+    } else if (i < rows && distances[i][j] === 1 + distances[i + 1][j]) {
+      changes.push({ kind: 'extra', actual: actual[i], expected: null });
+      i += 1;
+    } else {
+      changes.push({ kind: 'missing', actual: null, expected: expected[j] });
+      j += 1;
+    }
+  }
+
+  return { distance: distances[0][0], changes, truncated: false };
+}
+
 export function gradePracticeSession(questions, answers) {
   const items = questions.map((question) => {
     const answer = answers[question.id] ?? '';
     const normalized = normalizePracticeAnswer(answer);
     const accepted = [question.correct, ...question.accepted]
       .map(normalizePracticeAnswer);
+    const correct = normalized !== '' && accepted.includes(normalized);
+    // Compare against whichever accepted answer is closest, so permitted
+    // comma variants aren't incorrectly listed as extra mistakes.
+    const comparisons = accepted.map((reference) => ({
+      reference,
+      ...comparePracticeAnswer(normalized, reference),
+    }));
+    comparisons.sort((a, b) => a.distance - b.distance);
+    const closest = comparisons[0];
+
     return {
       question,
       answer,
-      correct: normalized !== '' && accepted.includes(normalized),
+      correct,
+      comparisonReference: closest.reference,
+      differences: correct || !normalized ? [] : closest.changes,
+      comparisonTruncated: !correct && Boolean(normalized) && closest.truncated,
     };
   });
   const correctCount = items.filter((item) => item.correct).length;
