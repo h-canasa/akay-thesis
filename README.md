@@ -10,6 +10,7 @@ Akay is a thesis prototype for a Filipino writing checker and practice web app. 
 
 - Homepage with the writing editor
 - Rule-based Filipino spelling, punctuation/capitalization, and selected grammar checks
+- Conservative, scored G7 grammar corrections for selected ng/nang usage patterns
 - Offline Filipino word-list checks for uncertain spelling and likely joined words (advisory-only; no score penalty)
 - Suggested correction + short Filipino explanation
 - Accept / ignore actions
@@ -59,3 +60,7 @@ Essay Exam responses and results are in-memory only: they are **not** saved acro
 Akay bundles a cleaned, MIT-licensed Filipino word list and marks unfamiliar words as possible spelling issues. It can suggest separating words such as `isangsirena → isang sirena` and removing an extra letter such as `magandaa → maganda`. These are **uncertain dictionary advisories**, distinguished visually from rule-based mistakes and **excluded from category scores**. Users can click a highlighted word to inspect one suggestion at a time. Exam Mode still shows no feedback before submission.
 
 For the methodology, limitations, licensing, and algorithm, see [Dictionary checking documentation](docs/dictionary-checking.md).
+
+## G7: ng/nang (limited context rules)
+
+Akay now identifies a small set of high-confidence ng/nang mismatches, including manner, direct-object, possession, repeated-action, and selected purpose constructions. The incorrect particle is highlighted as a **Gramatika** issue with a click-to-view correction; ambiguous sentences remain unchanged. See [G7 rules, examples, limitations, and KWF reference](docs/ng-nang-rules.md). Exam Mode continues to reveal suggestions only after submission.
