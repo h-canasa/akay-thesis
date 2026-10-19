@@ -7,6 +7,7 @@ import {
   createPracticeSession,
   gradePracticeSession,
   normalizePracticeAnswer,
+  comparePracticeAnswer,
 } from '../src/practice.js';
 
 const counts = (questions) => Object.fromEntries(
@@ -130,4 +131,56 @@ test('no answer receives zero points and scoring gracefully handles empty sets',
   const session = createPracticeSession(null, { random: seededRandom(20) });
   assert.equal(gradePracticeSession(session.questions, {}).percent, 0);
   assert.equal(gradePracticeSession([], {}).percent, 0);
+});
+
+test('review identifies unintended word changes beyond the tested raw/daw correction', () => {
+  const question = PRACTICE_QUESTIONS.find((item) => item.id === 'MX29');
+  const answer = 'Papunta raw si Ana sa bahay ninyo.';
+  const result = gradePracticeSession([question], { MX29: answer });
+  assert.equal(result.percent, 0);
+  assert.equal(result.items[0].comparisonReference, question.correct);
+  assert.deepEqual(result.items[0].differences, [
+    { kind: 'changed', actual: 'Papunta', expected: 'Pupunta' },
+    { kind: 'changed', actual: 'ninyo', expected: 'namin' },
+  ]);
+  assert.equal(result.items[0].comparisonTruncated, false);
+});
+
+test('review compares to closest accepted version to avoid incorrect comma warnings', () => {
+  const question = PRACTICE_QUESTIONS.find((item) => item.id === 'MX47');
+  const answer = 'Bumili siya ng mangga, saging at ubas.';
+  const result = gradePracticeSession([question], { MX47: answer });
+  assert.equal(result.percent, 0);
+  assert.equal(result.items[0].comparisonReference, question.accepted[0]);
+  assert.deepEqual(result.items[0].differences, [
+    { kind: 'changed', actual: 'siya', expected: 'ako' },
+  ]);
+});
+
+test('review distinguishes missing and extra punctuation and word tokens', () => {
+  assert.deepEqual(comparePracticeAnswer(
+    'Bumili ako ng mangga', 'Bumili ako ng mangga.',
+  ).changes, [{ kind: 'missing', actual: null, expected: '.' }]);
+  assert.deepEqual(comparePracticeAnswer(
+    'Bumili ako ng matamis na mangga.', 'Bumili ako ng mangga.',
+  ).changes, [
+    { kind: 'extra', actual: 'matamis', expected: null },
+    { kind: 'extra', actual: 'na', expected: null },
+  ]);
+});
+
+test('accepted alternative answers have no differences in post-submission review', () => {
+  const question = PRACTICE_QUESTIONS.find((item) => item.id === 'MX35');
+  const result = gradePracticeSession([question], { MX35: question.accepted[0] });
+  assert.equal(result.percent, 100);
+  assert.deepEqual(result.items[0].differences, []);
+});
+
+test('comparison is bounded for unusually long input', () => {
+  const reference = 'Isang pangungusap.';
+  const longAnswer = 'salita '.repeat(180);
+  const comparison = comparePracticeAnswer(longAnswer, reference);
+  assert.equal(comparison.truncated, true);
+  assert.equal(comparison.distance, Number.POSITIVE_INFINITY);
+  assert.deepEqual(comparison.changes, []);
 });
