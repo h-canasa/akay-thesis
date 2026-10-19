@@ -13,9 +13,9 @@ The bank is in `src/practiceQuestions.js`, and selection/grading algorithms are 
 ## Practice behavior
 
 - The student sees **one incorrect sentence at a time**, with a blank rewriting field.
-- They can go forward and back; a blank item can be skipped and is graded incorrect.
+- The flow is **strictly linear**: Question 1 → 2 → 3 → 4 → 5. The student must write a non-blank answer to enable Susunod/Ipasa. There is no Back or Skip action, and earlier answers cannot be revisited within an attempt.
 - **No suggestions, accepted answers, or performance score** are shown before the student submits the fifth item.
-- After submitting, students see their **correct answer count out of five**, percentage, and expandable reviews of **all five** sentences. Each review shows the incorrect source sentence, the student's response, the reference correction, accepted alternatives where provided, and a Filipino explanation.
+- After submitting, students see their **correct answer count out of five**, percentage, and expandable reviews of **all five** sentences. Each review shows the incorrect source sentence, the student's response, the reference correction, accepted alternatives where provided, **all token-level differences against the closest accepted answer**, and a Filipino explanation of the original issue.
 - Clicking `Subukan Muli` draws a new randomized set.
 - This feature is **practice only**, separate from Essay Exam Mode. It keeps answers in client memory only: refresh/navigation clears progress. It does not collect research scores.
 
@@ -29,7 +29,22 @@ Practice score = round((correct answers / 5) × 100)
 
 The code normalizes harmless whitespace, spaces before punctuation, and typographic quote characters, **but retains capitalization, wording, hyphenation, and terminal punctuation** because those are essential targets in the question bank.
 
-For list-punctuation questions (MX47–MX50, AX10), both a comma with and without the optional serial comma are accepted. Other correct paraphrases or regional variants not explicitly encoded may still be marked incorrect; that is an acknowledged limitation of deterministic exact-key grading, not a claim that the student's Filipino is wrong.
+For list-punctuation questions (MX35, MX47–MX50, AX10), both a comma with and without the optional serial comma are accepted. Other correct paraphrases or regional variants not explicitly encoded may still be marked incorrect; that is an acknowledged limitation of deterministic exact-key grading, not a claim that the student's Filipino is wrong.
+
+### Unplanned student edits and feedback
+
+The **answer key grades the entire rewritten sentence**, not only the original error. A student who corrects `daw → raw` but changes `Pupunta → Papunta` or `namin → ninyo` will not receive full credit. Previously, the feedback described only the prewritten error and hid the additional changes.
+
+The results page now aligns the student's response against the **nearest acceptable reference answer** and lists differences individually. Example for MX29:
+
+- Prompt: `Pupunta daw si Ana sa bahay namin.`
+- Reference: `Pupunta raw si Ana sa bahay namin.`
+- Student answer: `Papunta raw si Ana sa bahay ninyo.`
+- Differences shown: `Papunta → Pupunta` and `ninyo → namin`.
+
+This is an **answer-key comparison**, not a Filipino linguistic analysis. It can find deviations, including extra words, missing words, capitalization, and punctuation, but it cannot reliably explain *why* every alternative is linguistically incorrect. The canned rule explanation is therefore explicitly labeled **Paliwanag sa orihinal na isyu** and shown separately from additional differences.
+
+Very long responses are capped for token-level comparison so that pathological input cannot stall the browser. Students' textbox length is limited to 500 characters.
 
 ### Review findings
 
