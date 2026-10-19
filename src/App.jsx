@@ -901,8 +901,21 @@ export default function App() {
   const [hash, setHash] = useState(window.location.hash || '#/');
 
   useEffect(() => {
-    const onHash = () => setHash(window.location.hash || '#/');
+    const onHash = () => {
+      const nextHash = window.location.hash || '#/';
+
+      // Old bookmarked tool links return to the editor instead of
+      // retaining a retired page URL.
+      if (nextHash.startsWith('#/tools')) {
+        window.history.replaceState(null, '', '#/');
+        setHash('#/');
+      } else {
+        setHash(nextHash);
+      }
+    };
+
     window.addEventListener('hashchange', onHash);
+    onHash();
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
