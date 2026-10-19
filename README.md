@@ -41,7 +41,7 @@ Test Mode is currently session-only. Answers are not uploaded or persisted. This
 
 ## Essay Exam Mode
 
-Open `#/exam` to write a Filipino essay without live highlighting, suggestions, or a score. The editor analyzes the essay **only when the student clicks “Ipasa ang Sanaysay”**. Results show the submitted text, quality score, category scores, detected issues, and suggested corrections. The submission and score remain fixed during review. A new attempt starts with an empty essay.
+Open `#/exam` to write a Filipino essay without live highlighting, suggestions, or a score. The editor analyzes the essay **only when the student clicks “Ipasa ang Sanaysay”**. Results show the submitted text, quality score, category scores, and detected-issue highlights. Students can click or keyboard-select a highlighted issue to view its suggestion and explanation in the same contextual Mungkahi card used by the main editor. Only one suggestion appears at a time, with a close button; there is no long list of all suggestions. The submission and score remain fixed during review. A new attempt starts with an empty essay.
 
 The category scores each start at 100, subtract 12 points for each active, non-overlapping detected issue in that category, and cannot fall below 0. The overall score is a rounded weighted average:
 

@@ -47,11 +47,20 @@ function Header({ page }) {
   );
 }
 
-function HighlightedText({ text, issues, onIssueClick }) {
+function HighlightedText({ text, issues, onIssueClick, keyboardAccessible = false, selectedIssueId = null }) {
   if (!text) return null;
 
   const chunks = [];
   let cursor = 0;
+
+  const handleIssueKeyDown = (event, issue) => {
+    if (!keyboardAccessible || !onIssueClick) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      event.stopPropagation();
+      onIssueClick(issue);
+    }
+  };
 
   issues.forEach((issue, index) => {
     if (issue.start > cursor) {
@@ -65,9 +74,13 @@ function HighlightedText({ text, issues, onIssueClick }) {
     if (issue.start === issue.end) {
       chunks.push(
         <span
-          className="issue-marker insertion"
+          className={`issue-marker insertion${selectedIssueId === issueKey(issue) ? ' issue-marker-selected' : ''}`}
           key={`issue-${index}`}
           title={issue.explanation}
+          role={keyboardAccessible && onIssueClick ? 'button' : undefined}
+          tabIndex={keyboardAccessible && onIssueClick ? 0 : undefined}
+          aria-label={keyboardAccessible && onIssueClick ? `Mungkahi: magdagdag ng ${issue.replacement}` : undefined}
+          onKeyDown={(event) => handleIssueKeyDown(event, issue)}
           onPointerDown={(event) => {
             if (!onIssueClick) return;
             event.preventDefault();
@@ -88,9 +101,13 @@ function HighlightedText({ text, issues, onIssueClick }) {
 
       chunks.push(
         <mark
-          className={`issue-marker ${type}`}
+          className={`issue-marker ${type}${selectedIssueId === issueKey(issue) ? ' issue-marker-selected' : ''}`}
           key={`issue-${index}`}
           title={issue.explanation}
+          role={keyboardAccessible && onIssueClick ? 'button' : undefined}
+          tabIndex={keyboardAccessible && onIssueClick ? 0 : undefined}
+          aria-label={keyboardAccessible && onIssueClick ? `Mungkahi: ${issue.original} patungong ${issue.replacement}` : undefined}
+          onKeyDown={(event) => handleIssueKeyDown(event, issue)}
           onPointerDown={(event) => {
             if (!onIssueClick) return;
             event.preventDefault();
@@ -113,72 +130,59 @@ function HighlightedText({ text, issues, onIssueClick }) {
   return <p className="review-text">{chunks}</p>;
 }
 
-function SuggestionPanel({ analysis, onAccept, onIgnore, readOnly = false }) {
-  const issues = analysis?.issues ?? [];
+function ContextSuggestion({ issue, onClose, onAccept, onIgnore }) {
+  if (!issue) return null;
 
   return (
-    <aside className="suggestions-card">
-      <div className="panel-heading">
-        <div className="heading-with-icon">
-          <span className="panel-icon" aria-hidden="true">💡</span>
-          <h2>Mga Mungkahi</h2>
+    <div className="context-suggestion context-inline" aria-live="polite">
+      <div className="context-suggestion-heading">
+        <div>
+          <span>Mungkahi · {issue.category}</span>
+          <strong>
+            {issue.original || '∅'} <b aria-hidden="true">→</b>{' '}
+            {issue.replacement}
+          </strong>
         </div>
-        <span className="count-badge">{analysis ? issues.length : 0}</span>
+        <button
+          type="button"
+          className="context-close"
+          onClick={(event) => {
+            event.stopPropagation();
+            onClose();
+          }}
+          aria-label="Isara ang mungkahi"
+        >
+          ×
+        </button>
       </div>
 
-      {!analysis ? (
-        <div className="empty-suggestions">
-          <div className="empty-suggestions-icon">✓</div>
-          <strong>Handa ang Akay.</strong>
-          <p>I-click ang “Suriin ang Teksto” para makita rito ang mga mungkahi.</p>
-        </div>
-      ) : issues.length === 0 ? (
-        <div className="empty-suggestions success">
-          <div className="empty-suggestions-icon">✓</div>
-          <strong>Walang nakitang isyu.</strong>
-          <p>Walang mungkahi sa kasalukuyang saklaw ng Version 1 checker.</p>
-        </div>
-      ) : (
-        <div className="suggestion-list">
-          {issues.map((issue, index) => (
-            <article
-              className={`suggestion suggestion-${issue.category === CATEGORY.PUNCTUATION ? 'punctuation' : issue.category === CATEGORY.GRAMMAR ? 'grammar' : 'spelling'}`}
-              key={`${issue.ruleId}-${issue.start}-${index}`}
-            >
-              <div className="suggestion-topline">
-                <span className="rule-tag">{issue.ruleId}</span>
-                <span>{issue.category}</span>
-              </div>
+      <p>{issue.explanation}</p>
 
-              <div className="correction">
-                <span className="wrong">{issue.original || '∅'}</span>
-                <span aria-hidden="true">→</span>
-                <strong>{issue.replacement}</strong>
-              </div>
-
-              <p>{issue.explanation}</p>
-
-              {!readOnly && (
-                <div className="suggestion-actions">
-                  <button
-                    className="button button-small button-primary"
-                    onClick={() => onAccept(issue)}
-                  >
-                    Tanggapin
-                  </button>
-                  <button
-                    className="button button-small button-ghost"
-                    onClick={() => onIgnore(issue)}
-                  >
-                    Huwag Pansinin
-                  </button>
-                </div>
-              )}
-            </article>
-          ))}
+      {onAccept && onIgnore && (
+        <div className="suggestion-actions">
+          <button
+            type="button"
+            className="button button-small button-primary"
+            onClick={(event) => {
+              event.stopPropagation();
+              onAccept(issue);
+            }}
+          >
+            Tanggapin
+          </button>
+          <button
+            type="button"
+            className="button button-small button-ghost"
+            onClick={(event) => {
+              event.stopPropagation();
+              onIgnore(issue);
+            }}
+          >
+            Huwag Pansinin
+          </button>
         </div>
       )}
-    </aside>
+    </div>
   );
 }
 
@@ -419,55 +423,12 @@ function EditorPage() {
                 </div>
               </div>
 
-                {selectedIssue && (
-                  <div
-                    className="context-suggestion context-inline"
-                    aria-live="polite"
-                  >
-                    <div className="context-suggestion-heading">
-                      <div>
-                        <span>Mungkahi · {selectedIssue.category}</span>
-                        <strong>
-                          {selectedIssue.original || '∅'} <b aria-hidden="true">→</b>{' '}
-                          {selectedIssue.replacement}
-                        </strong>
-                      </div>
-                      <button
-                        className="context-close"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSelectedIssueId(null);
-                        }}
-                        aria-label="Isara ang mungkahi"
-                      >
-                        ×
-                      </button>
-                    </div>
-
-                    <p>{selectedIssue.explanation}</p>
-
-                    <div className="suggestion-actions">
-                      <button
-                        className="button button-small button-primary"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          acceptIssue(selectedIssue);
-                        }}
-                      >
-                        Tanggapin
-                      </button>
-                      <button
-                        className="button button-small button-ghost"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          ignoreIssue(selectedIssue);
-                        }}
-                      >
-                        Huwag Pansinin
-                      </button>
-                    </div>
-                  </div>
-                )}
+              <ContextSuggestion
+                issue={selectedIssue}
+                onClose={() => setSelectedIssueId(null)}
+                onAccept={acceptIssue}
+                onIgnore={ignoreIssue}
+              />
 
               <div className="editor-surface live-editor-surface">
                 <div
@@ -739,7 +700,12 @@ const MAX_ESSAY_LENGTH = 10000;
 function EssayExamPage() {
   const [draft, setDraft] = useState('');
   const [submission, setSubmission] = useState(null);
+  const [selectedIssueId, setSelectedIssueId] = useState(null);
   const resultHeadingRef = useRef(null);
+
+  const selectedIssue = submission?.analysis.issues.find(
+    (issue) => issueKey(issue) === selectedIssueId,
+  ) ?? null;
 
   useEffect(() => {
     if (submission) resultHeadingRef.current?.focus();
@@ -755,6 +721,7 @@ function EssayExamPage() {
   const startNewEssay = () => {
     setDraft('');
     setSubmission(null);
+    setSelectedIssueId(null);
   };
 
   return (
@@ -816,13 +783,24 @@ function EssayExamPage() {
             <section className="test-card exam-review-card" aria-label="Ipinasa na sanaysay">
               <h2>Sinuring Sanaysay</h2>
               <p className="exam-review-note">
-                Naka-highlight na ngayon ang mga natukoy na isyu. Ang orihinal mong sagot at marka ay hindi na mababago.
+                {submission.analysis.issues.length > 0
+                  ? 'Pindutin ang naka-highlight na bahagi upang makita ang mungkahi. Hindi na mababago ang ipinasa mong sanaysay at marka.'
+                  : 'Walang nakitang isyu sa kasalukuyang saklaw ng Akay checker. Hindi na mababago ang ipinasa mong sanaysay at marka.'}
               </p>
+              <ContextSuggestion
+                issue={selectedIssue}
+                onClose={() => setSelectedIssueId(null)}
+              />
               <div className="exam-reviewed-essay">
-                <HighlightedText text={submission.essay} issues={submission.analysis.issues} />
+                <HighlightedText
+                  text={submission.essay}
+                  issues={submission.analysis.issues}
+                  onIssueClick={(issue) => setSelectedIssueId(issueKey(issue))}
+                  keyboardAccessible
+                  selectedIssueId={selectedIssueId}
+                />
               </div>
             </section>
-            <SuggestionPanel analysis={submission.analysis} readOnly />
             <div className="exam-actions exam-restart">
               <button className="button button-primary" type="button" onClick={startNewEssay}>
                 Sumulat ng Panibagong Sanaysay
