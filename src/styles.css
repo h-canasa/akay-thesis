@@ -1383,6 +1383,25 @@ footer span:first-child {
   margin: -10px 4px 0;
 }
 
+.exam-review-card .context-inline {
+  width: min(620px, 100%);
+  margin: 0 0 16px;
+}
+
+.exam-reviewed-essay .issue-marker:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.exam-reviewed-essay .issue-marker-selected {
+  box-shadow: 0 0 0 2px rgba(18, 105, 235, 0.35);
+}
+
+.exam-reviewed-essay .issue-marker.insertion {
+  width: 0.7em;
+  margin-right: -0.7em;
+}
+
 .exam-reviewed-essay {
   min-height: 160px;
   max-height: 540px;
