@@ -117,7 +117,7 @@ test('normalization accepts harmless whitespace while preserving assessed punctu
 });
 
 test('valid comma variations are accepted in list questions', () => {
-  for (const id of ['MX47', 'MX48', 'MX49', 'MX50', 'AX10']) {
+  for (const id of ['MX35', 'MX47', 'MX48', 'MX49', 'MX50', 'AX10']) {
     const item = PRACTICE_QUESTIONS.find((question) => question.id === id);
     assert.ok(item.accepted.length >= 1, id);
     for (const accepted of item.accepted) {
