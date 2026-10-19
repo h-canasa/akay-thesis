@@ -1,4 +1,5 @@
 import { findDictionaryAdvisories } from './dictionary/checkWords.js';
+import { findNgNangIssues } from './rules/ngNang.js';
 
 export function normalizeEditorText(value = '') {
   return String(value)
@@ -197,6 +198,8 @@ export function analyzeText(text, ignored = new Set()) {
   addDRAlternationRule(issues, text, 'doon', 'roon', 'G6', {
     allowSentenceInitial: true,
   });
+
+  issues.push(...findNgNangIssues(text));
 
   const names = /\bSi\s+([A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿÑñ-]+)\s+at\s+([A-ZÁÉÍÓÚÑ][A-Za-zÀ-ÿÑñ-]+)\b/g;
   for (const match of text.matchAll(names)) {
