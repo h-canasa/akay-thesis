@@ -1274,6 +1274,200 @@ textarea:focus-visible {
   text-align: center;
 }
 
+/* Practice test: results appear only after the full five-question attempt. */
+.practice-card textarea {
+  min-height: 170px;
+  font-size: 1rem;
+}
+
+.practice-card .test-question blockquote {
+  margin-bottom: 20px;
+}
+
+.practice-score-card {
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.practice-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--blue-dark);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.practice-score-number {
+  font-size: clamp(3rem, 5vw, 4.3rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  color: var(--navy);
+}
+
+.practice-score-number span {
+  font-size: 0.42em;
+  color: #5d6e8c;
+  letter-spacing: 0;
+}
+
+.practice-score-card > strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--blue-dark);
+  font-size: 1.1rem;
+}
+
+.practice-score-card > p {
+  margin: 12px 0 0;
+  font-size: 0.77rem;
+  color: var(--muted);
+}
+
+.practice-review {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.practice-review-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.practice-review-heading h2 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 1.15rem;
+}
+
+.practice-review-heading > span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.practice-review-item {
+  overflow: hidden;
+  border: 1px solid #dde7f2;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 5px 20px rgba(35, 81, 137, 0.04);
+}
+
+.practice-review-item > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.practice-review-item > summary::-webkit-details-marker {
+  display: none;
+}
+
+.practice-result-symbol {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff1f2;
+  color: #cc3c52;
+  font-weight: 800;
+}
+
+.practice-review-correct .practice-result-symbol {
+  background: #eaf7ee;
+  color: #187540;
+}
+
+.practice-review-summary {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.practice-review-summary strong {
+  color: var(--navy);
+  font-size: 0.89rem;
+}
+
+.practice-review-summary small {
+  color: #61708a;
+  font-size: 0.72rem;
+}
+
+.practice-review-expand {
+  margin-left: auto;
+  color: var(--blue-dark);
+  font-size: 0.7rem;
+  text-align: right;
+}
+
+.practice-review-body {
+  display: grid;
+  gap: 14px;
+  border-top: 1px solid #e8eef6;
+  padding: 18px 20px 20px;
+}
+
+.practice-review-field > span {
+  display: block;
+  margin-bottom: 5px;
+  color: #6b7b95;
+  font-size: 0.71rem;
+  font-weight: 700;
+}
+
+.practice-review-field p {
+  margin: 0;
+  color: #18325e;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.practice-review-explanation {
+  margin: 2px 0 0;
+  border-radius: 9px;
+  padding: 12px 14px;
+  color: #37557a;
+  background: #f2f7fd;
+  font-size: 0.83rem;
+  line-height: 1.65;
+}
+
+.practice-retry {
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+@media (max-width: 620px) {
+  .practice-review-item > summary {
+    padding: 12px;
+    gap: 9px;
+  }
+
+  .practice-review-expand {
+    max-width: 70px;
+  }
+
+  .practice-review-body {
+    padding: 14px;
+  }
+
+  .practice-retry .button {
+    width: 100%;
+  }
+}
+
 .completion-card {
   max-width: 620px;
   margin: 42px auto;

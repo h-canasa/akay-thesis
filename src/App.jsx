@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { analyzeText, CATEGORY, issueKey, normalizeEditorText } from './checker.js';
+import { APPROVED_PRACTICE_QUESTIONS } from './practiceQuestions.js';
+import { createPracticeSession, gradePracticeSession, QUESTIONS_PER_PRACTICE } from './practice.js';
 
 const starterText = 'Kumain rin ako ng mangga saging at ubas';
 
@@ -694,25 +696,6 @@ function ToolsPage() {
   );
 }
 
-const testItems = [
-  {
-    title: 'Tanong 1',
-    prompt: 'Isulat muli nang wasto ang pangungusap:',
-    source: 'bumili ako ng mangga saging at ubas',
-  },
-  {
-    title: 'Tanong 2',
-    prompt: 'Isulat muli nang wasto ang pangungusap:',
-    source: 'Kumain rin ako',
-  },
-  {
-    title: 'Tanong 3',
-    prompt: 'Isulat muli nang wasto ang pangungusap:',
-    source: 'nagaaral ako tuwing lunes',
-  },
-];
-
-
 // Essay Exam is a separate, unassisted writing session. There is deliberately
 // no analyzeText call until the student submits. Results are immutable snapshots
 // for the current session, so reviewing corrections cannot change the grade.
@@ -841,50 +824,119 @@ function EssayExamPage() {
 }
 
 function TestPage() {
+  const [practice, setPractice] = useState(() => createPracticeSession());
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState(Array(testItems.length).fill(''));
+  const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const resultHeadingRef = useRef(null);
 
-  const item = testItems[index];
-  const progress = Math.round(((index + 1) / testItems.length) * 100);
+  const item = practice.questions[index];
+  const answeredCount = practice.questions.filter((question) => answers[question.id]?.trim()).length;
+  const progress = Math.round(((index + 1) / QUESTIONS_PER_PRACTICE) * 100);
+  const review = useMemo(
+    () => (submitted ? gradePracticeSession(practice.questions, answers) : null),
+    [submitted, practice, answers],
+  );
+
+  useEffect(() => {
+    if (submitted) resultHeadingRef.current?.focus();
+  }, [submitted]);
 
   const saveAnswer = (value) => {
-    const next = [...answers];
-    next[index] = value;
-    setAnswers(next);
+    setAnswers((previous) => ({ ...previous, [item.id]: value }));
   };
 
   const next = () => {
-    if (index < testItems.length - 1) {
-      setIndex(index + 1);
+    if (index < QUESTIONS_PER_PRACTICE - 1) {
+      setIndex((previous) => previous + 1);
     } else {
       setSubmitted(true);
     }
   };
 
-  if (submitted) {
+  const tryAgain = () => {
+    setPractice((previous) => createPracticeSession(previous));
+    setAnswers({});
+    setIndex(0);
+    setSubmitted(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (review) {
     return (
       <>
         <Header page="test" />
         <main className="page-shell test-shell">
-          <section className="completion-card">
-            <div className="completion-icon">✓</div>
-            <h1>Tapos na ang demo test.</h1>
-            <p>
-              Session-only ang mga sagot sa prototype na ito at hindi iniimbak sa
-              database.
-            </p>
-            <button
-              className="button button-primary"
-              onClick={() => {
-                setIndex(0);
-                setAnswers(Array(testItems.length).fill(''));
-                setSubmitted(false);
-              }}
-            >
-              Subukan Muli
-            </button>
+          <section className="test-hero">
+            <h1 ref={resultHeadingRef} tabIndex={-1}>Resulta ng Mock Test</h1>
+            <p>Balikan ang iyong mga sagot at pag-aralan ang mga tamang pagwawasto.</p>
+            <span className="hero-accent" aria-hidden="true" />
           </section>
+
+          <section className="test-card practice-score-card" aria-label="Kabuuang resulta" aria-live="polite">
+            <span className="practice-eyebrow">Natapos mo ang pagsasanay!</span>
+            <div className="practice-score-number">{review.correctCount}<span> / {review.total}</span></div>
+            <strong>{review.percent}% · {review.correctCount} tamang sagot</strong>
+            <p>
+              Ang marka rito ay batay sa tamang sagot sa limang tanong, hindi sa weighted essay score.
+            </p>
+          </section>
+
+          <section className="practice-review" aria-label="Pagsusuri ng mga sagot">
+            <div className="practice-review-heading">
+              <h2>Pagsusuri ng mga Sagot</h2>
+              <span>{review.total - review.correctCount} kailangang balikan</span>
+            </div>
+
+            {review.items.map(({ question, answer, correct }, questionIndex) => (
+              <details
+                className={`practice-review-item ${correct ? 'practice-review-correct' : 'practice-review-incorrect'}`}
+                key={question.id}
+                open={!correct}
+              >
+                <summary>
+                  <span aria-hidden="true" className="practice-result-symbol">{correct ? '✓' : '×'}</span>
+                  <span className="practice-review-summary">
+                    <strong>Tanong {questionIndex + 1} · {question.category}</strong>
+                    <small>{question.id} · {correct ? 'Tama' : 'Balikan ang sagot'}</small>
+                  </span>
+                  <span className="practice-review-expand">Tingnan ang paliwanag</span>
+                </summary>
+                <div className="practice-review-body">
+                  <div className="practice-review-field">
+                    <span>Maling pangungusap</span>
+                    <p>{question.incorrect}</p>
+                  </div>
+                  <div className="practice-review-field">
+                    <span>Iyong sagot</span>
+                    <p>{answer.trim() || 'Walang sagot'}</p>
+                  </div>
+                  <div className="practice-review-field">
+                    <span>Tamang pangungusap</span>
+                    <p><strong>{question.correct}</strong></p>
+                  </div>
+                  {question.accepted.length > 0 && (
+                    <div className="practice-review-field">
+                      <span>Tinatanggap ding sagot</span>
+                      <p>{question.accepted.join(' / ')}</p>
+                    </div>
+                  )}
+                  <p className="practice-review-explanation">
+                    <strong>Paliwanag: </strong>{question.explanation}
+                  </p>
+                </div>
+              </details>
+            ))}
+          </section>
+
+          <div className="test-actions practice-retry">
+            <button className="button button-primary" type="button" onClick={tryAgain}>
+              Subukan Muli · Bagong 5 Tanong
+            </button>
+          </div>
+          <p className="test-disclaimer">
+            Para sa pagsasanay lamang. Hindi iniimbak ang mga sagot at marka kapag ini-refresh o iniwan ang pahina.
+          </p>
         </main>
         <Footer />
       </>
@@ -894,64 +946,66 @@ function TestPage() {
   return (
     <>
       <Header page="test" />
-
       <main className="page-shell test-shell">
         <section className="test-hero">
-          <h1>Test Mode</h1>
-          <p>Sumagot nang walang mungkahi habang nagsusulat.</p>
+          <h1>Mock Test Mode</h1>
+          <p>
+            Limang random na tanong mula sa {APPROVED_PRACTICE_QUESTIONS.length} aktibong
+            practice questions. Walang mungkahi o marka hanggang sa huling Ipasa.
+          </p>
           <span className="hero-accent" aria-hidden="true" />
         </section>
 
-        <section className="test-card">
+        <section className="test-card practice-card">
           <div className="test-meta">
-            <strong>{item.title} ng {testItems.length}</strong>
-            <span>{progress}%</span>
+            <strong>Tanong {index + 1} ng {QUESTIONS_PER_PRACTICE}</strong>
+            <span>{answeredCount} / {QUESTIONS_PER_PRACTICE} nasagutan</span>
           </div>
 
-          <div className="progress-track">
+          <div className="progress-track" aria-label={`Tanong ${index + 1} ng ${QUESTIONS_PER_PRACTICE}`}>
             <span style={{ width: `${progress}%` }} />
           </div>
 
           <div className="test-question">
-            <h2>Paksa sa Pagsulat</h2>
+            <h2>Isulat muli nang wasto ang pangungusap:</h2>
             <blockquote>
-              <span>{item.prompt}</span>
-              <strong>{item.source}</strong>
+              <strong>{item.incorrect}</strong>
             </blockquote>
           </div>
 
-          <label htmlFor="test-answer">Isulat ang iyong sagot</label>
+          <label htmlFor="test-answer">Iyong sagot</label>
           <textarea
             id="test-answer"
-            value={answers[index]}
+            key={item.id}
+            value={answers[item.id] ?? ''}
             onChange={(event) => saveAnswer(event.target.value)}
-            placeholder="Isulat dito ang iyong sagot..."
-            spellCheck="false"
+            placeholder="Isulat ang buong tamang pangungusap..."
+            spellCheck={false}
+            rows={4}
           />
 
           <div className="test-actions">
             <button
+              type="button"
               className="button button-ghost"
               disabled={index === 0}
-              onClick={() => setIndex(Math.max(0, index - 1))}
+              onClick={() => setIndex((previous) => previous - 1)}
             >
               Nakaraan
             </button>
-            <button
-              className="button button-primary"
-              disabled={!answers[index].trim()}
-              onClick={next}
-            >
-              {index === testItems.length - 1 ? 'Ipasa' : 'Susunod'}
+            <button type="button" className="button button-primary" onClick={next}>
+              {index === QUESTIONS_PER_PRACTICE - 1
+                ? 'Ipasa ang mga Sagot'
+                : answers[item.id]?.trim() ? 'Susunod' : 'Laktawan'}
             </button>
           </div>
         </section>
 
         <p className="test-disclaimer">
-          Walang awtomatikong mungkahi o pagwawasto sa Test Mode.
+          2 Gramatika · 2 Baybay · 1 Bantas at Malaking Titik sa bawat pagtatangka.
+          Pagkatapos ng Ipasa, makikita ang marka, mga tamang sagot, at paliwanag.
         </p>
       </main>
-
       <Footer />
     </>
   );

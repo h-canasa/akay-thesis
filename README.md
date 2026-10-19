@@ -17,7 +17,7 @@ Akay is a thesis prototype for a Filipino writing checker and practice web app. 
 - Writing score and error counts
 - Weighted overall score: Gramatika 1.5, Baybay 1.0, Bantas at Malaking Titik 0.5
 - Essay Exam Mode: unassisted Filipino essay writing with scores, highlights, and corrections shown only after submission
-- Separate Test Mode with suggestions disabled
+- Separate randomized Mock Test Mode: 5 balanced questions from a 60-question active bank, with answer-key grading and explanations after submission
 - GitHub Pages deployment
 
 The first implementation intentionally prioritizes deterministic rules that can be demonstrated reliably. POS-dependent rules such as broad **ng/nang** and **may/mayroon** analysis are deferred until a later NLP/POS-capable iteration.
@@ -39,7 +39,7 @@ The Vite base path is configured for the GitHub Pages project URL `/akay-thesis/
 
 ## Research prototype note
 
-Test Mode is currently session-only. Answers are not uploaded or persisted. This keeps the first thesis prototype simple and removes the need for accounts or a database.
+Mock Test answers and scores are session-only, not uploaded or persisted. The separate Essay Exam submissions are also session-only. This keeps the current thesis prototype simple and removes the need for accounts or a database.
 
 ## Essay Exam Mode
 
@@ -64,3 +64,9 @@ For the methodology, limitations, licensing, and algorithm, see [Dictionary chec
 ## G7: ng/nang (limited context rules)
 
 Akay now identifies a small set of high-confidence ng/nang mismatches, including manner, direct-object, possession, repeated-action, and selected purpose constructions. The incorrect particle is highlighted as a **Gramatika** issue with a click-to-view correction; ambiguous sentences remain unchanged. See [G7 rules, examples, limitations, and KWF reference](docs/ng-nang-rules.md). Exam Mode continues to reveal suggestions only after submission.
+
+## Mock Test Mode
+
+Open `#/test` for a **five-question formative practice attempt**. Questions are drawn without repeats within an attempt, balanced as **2 Gramatika, 2 Baybay, 1 Bantas at Malaking Titik**. No feedback is displayed until submission. At the end, students receive a score based on correct answers out of five, together with sentence-by-sentence corrections, accepted alternatives, and explanations. Retrying produces a new randomized set, avoiding the immediately previous questions where possible. This score is **not** the Essay Exam weighted score.
+
+The bank includes the 50 student-provided `MX` questions and 12 additional `AX` questions. Two student items (MX22 and MX23) are flagged for expert review and excluded, leaving **60 active items**. For details, see [Mock Test documentation](docs/mock-test.md).
