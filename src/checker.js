@@ -11,6 +11,15 @@ const CATEGORY = {
   PUNCTUATION: 'Bantas at Malaking Titik',
 };
 
+// Agreed thesis scoring weights. Category percentages use the same
+// 12-point-per-detected-issue scale as the original editor.
+export const SCORE_WEIGHTS = Object.freeze({
+  [CATEGORY.SPELLING]: 1.0,
+  [CATEGORY.GRAMMAR]: 1.5,
+  [CATEGORY.PUNCTUATION]: 0.5,
+});
+const CATEGORY_POINT_DEDUCTION = 12;
+
 const knownCorrections = [
   ['B1', /\bkumaen\b/gi, 'kumain', 'Ang “kumaen” ay hindi wastong baybay. Gamitin ang “kumain”.'],
   ['B2', /\bnuon\b/gi, 'noon', 'Karaniwang maling baybay ang “nuon”. Ang wastong anyo ay “noon”.'],
@@ -277,10 +286,25 @@ export function analyzeText(text, ignored = new Set()) {
     counts[issue.category] += 1;
   });
 
-  const score = Math.max(0, 100 - filtered.length * 8);
+  const categoryScores = Object.fromEntries(
+    Object.values(CATEGORY).map((category) => [
+      category,
+      Math.max(0, 100 - counts[category] * CATEGORY_POINT_DEDUCTION),
+    ]),
+  );
+
+  const totalWeight = Object.values(SCORE_WEIGHTS).reduce(
+    (sum, weight) => sum + weight,
+    0,
+  );
+  const weightedSum = Object.entries(SCORE_WEIGHTS).reduce(
+    (sum, [category, weight]) => sum + categoryScores[category] * weight,
+    0,
+  );
+  const score = Math.round(weightedSum / totalWeight);
   const level = score >= 90 ? 'Mahusay' : score >= 75 ? 'Katamtaman' : 'Nangangailangan ng Pagsasanay';
 
-  return { issues: filtered, counts, score, level };
+  return { issues: filtered, counts, categoryScores, score, level };
 }
 
 export { CATEGORY, issueKey };
